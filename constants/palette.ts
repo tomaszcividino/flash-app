@@ -1,4 +1,4 @@
-export default {
+export const palette = {
   colors: {
     purple: {
       light: '#7048E8',
@@ -6,10 +6,12 @@ export default {
     },
     grey: {
       light: '#EEF0F2',
+      medium: '#CACACA',
       dark: '#ACB5BD'
     },
 
     white: '#FFFFFF',
-    black: '#000000'
+    black: '#000000',
+    red: '#FC5555'
   }
 }

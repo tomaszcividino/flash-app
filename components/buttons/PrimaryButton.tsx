@@ -1,14 +1,14 @@
-import palette from '@/constants/palette'
+import { palette } from '@/constants/palette'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
-
 interface PrimaryButtonProps {
   text: string
   filled: boolean
+  onPress: any
 }
 
-export const PrimaryButton = ({ text, filled }: PrimaryButtonProps) => {
+export const PrimaryButton = ({ text, filled, onPress }: PrimaryButtonProps) => {
   return (
-    <TouchableOpacity style={[styles.button, filled ? styles.filled : styles.outlined]}>
+    <TouchableOpacity style={[styles.button, filled ? styles.filled : styles.outlined]} onPress={onPress}>
       <Text style={[styles.buttonText, filled ? styles.filledText : styles.outlinedText]}>{text}</Text>
     </TouchableOpacity>
   )

@@ -1,7 +1,7 @@
 import { WelcomeScreen } from '@/screens/onboarding/welcome/WelcomeScreen'
 import { SafeAreaView, StyleSheet } from 'react-native'
 
-import palette from '@/constants/palette'
+import { palette } from '@/constants/palette'
 
 export default function WelcomeInitialScreen() {
   return (

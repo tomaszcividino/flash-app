@@ -1,10 +1,8 @@
 import { StyleSheet, View } from 'react-native'
 
 import { CustomText } from '@/components/typography/CustomText'
+import { palette } from '@/constants/palette'
 import { getWindowWidth } from '@/utils/getWindowWidth'
-
-import palette from '@/constants/palette'
-
 interface WelcomeSliderItemProps {
   titleUpper: string
   titleLower: string

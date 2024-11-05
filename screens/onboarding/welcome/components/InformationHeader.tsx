@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    marginBottom: 24
+    marginBottom: 12
   },
   title: {
     fontSize: 15,

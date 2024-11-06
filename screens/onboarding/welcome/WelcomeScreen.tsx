@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, StyleSheet } from 'react-native'
+import { NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, StyleSheet, View, StatusBar } from 'react-native'
 
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
@@ -38,7 +38,10 @@ export const WelcomeScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    height: '100%',
-    backgroundColor: palette.colors.white
+    flex: 1,
+    backgroundColor: 'white'
+  },
+  safeArea: {
+    backgroundColor: 'white'
   }
 })

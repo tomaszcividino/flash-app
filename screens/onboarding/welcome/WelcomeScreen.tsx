@@ -1,64 +1,47 @@
-import { useState } from 'react';
-import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  SafeAreaView,
-  StyleSheet,
-  View,
-  StatusBar,
-} from 'react-native';
+import { useState } from 'react'
+import { NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, StyleSheet, View, StatusBar } from 'react-native'
 
-import { getWindowWidth } from '@/utils/getWindowWidth';
-import { InformationHeader } from './components/InformationHeader';
-import { PaginationDots } from './components/PaginationDots';
-import { WelcomeButtons } from './components/WelcomeButtons';
-import { WelcomeSlider } from './components/WelcomeSlider';
-
-import palette from '@/constants/palette';
-
-interface Slide {
-  titleUpper: string;
-  titleLower: string;
-}
-
+import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
+import { palette } from '@/constants/palette'
+import { typography } from '@/constants/typography'
+import { slides } from '@/data/welcome/slides'
+import { useNavigation } from '@/hooks/useNavigation'
+import { getWindowWidth } from '@/utils/getWindowWidth'
+import { useQueryClient } from '@tanstack/react-query'
+import { PaginationDots } from './components/PaginationDots'
+import { WelcomeSlider } from './components/WelcomeSlider'
 interface ScrollEvent {
-  (event: NativeSyntheticEvent<NativeScrollEvent>): void;
+  (event: NativeSyntheticEvent<NativeScrollEvent>): void
 }
-
-const slides: Slide[] = [
-  { titleUpper: 'All in one', titleLower: 'signage solution' },
-  { titleUpper: 'Up and running in', titleLower: '30 seconds' },
-  { titleUpper: 'For 1 to 1000 screens.', titleLower: 'Whatever the size.' },
-];
 
 export const WelcomeScreen = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-
+  const [activeIndex, setActiveIndex] = useState(0)
+  const { navigateToAuthentication } = useNavigation()
+  const queryClient = useQueryClient()
   const handleScroll: ScrollEvent = (event) => {
-    const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.floor(contentOffsetX / getWindowWidth());
-    setActiveIndex(index);
-  };
+    const contentOffsetX = event.nativeEvent.contentOffset.x
+    const index = Math.floor(contentOffsetX / getWindowWidth())
+    setActiveIndex(index)
+  }
+
+  const buttonData = [{ text: typography.onboarding.getStarted, onPress: navigateToAuthentication, filled: true }]
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-        <InformationHeader />
-      </SafeAreaView>
-      <WelcomeSlider slides={slides} onScroll={handleScroll} />
-      <PaginationDots slides={slides} activeIndex={activeIndex} />
-      <WelcomeButtons />
-    </View>
-  );
-};
+    <SafeAreaView style={styles.container}>
+      <AuthenticationWrapper screenName={typography.onboarding.fugoFlash} buttonData={buttonData} rightIcon="info">
+        <WelcomeSlider slides={slides} onScroll={handleScroll} />
+        <PaginationDots slides={slides} activeIndex={activeIndex} />
+      </AuthenticationWrapper>
+    </SafeAreaView>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: 'white'
   },
   safeArea: {
-    backgroundColor: 'white',
-  },
-});
+    backgroundColor: 'white'
+  }
+})

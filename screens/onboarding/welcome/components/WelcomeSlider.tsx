@@ -1,12 +1,10 @@
 import { getWindowWidth } from '@/utils/getWindowWidth'
 import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import { WelcomeSliderItem } from './WelcomeSliderItem'
-
 interface Slide {
   titleUpper: string
   titleLower: string
 }
-
 interface WelcomeSliderProps {
   slides: Slide[]
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void

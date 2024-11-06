@@ -1,11 +1,9 @@
-import palette from '@/constants/palette'
+import { palette } from '@/constants/palette'
 import { StyleSheet, View } from 'react-native'
-
 interface Slide {
   titleUpper: string
   titleLower: string
 }
-
 interface PaginationDotsProps {
   slides: Slide[]
   activeIndex: number

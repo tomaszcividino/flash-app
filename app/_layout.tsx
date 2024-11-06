@@ -1,9 +1,3 @@
-import { useFonts } from 'expo-font'
-import { Stack, useRouter } from 'expo-router'
-import * as SplashScreen from 'expo-splash-screen'
-import { useEffect, useState } from 'react'
-import { Platform, StatusBar } from 'react-native'
-
 import { useColorScheme } from '@/hooks/useColorScheme'
 import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -11,6 +5,11 @@ import { DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
 import { QueryClient, useQuery } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { useFonts } from 'expo-font'
+import { Stack, useRouter } from 'expo-router'
+import * as SplashScreen from 'expo-splash-screen'
+import { useEffect, useState } from 'react'
+import { Platform, StatusBar } from 'react-native'
 
 import 'react-native-reanimated'
 
@@ -75,16 +74,6 @@ function RootLayoutNav() {
       StatusBar.setBackgroundColor('white')
     }
   }, [])
-
-  useEffect(() => {
-    if (isUserLoggedIn) {
-      router.replace('/(main)/')
-    } else {
-      router.replace('/(welcome)/')
-    }
-  }, [isUserLoggedIn, router])
-
-  console.log(isUserLoggedIn, 'from root')
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DefaultTheme : DefaultTheme}>

@@ -7,10 +7,12 @@ interface ButtonConfig {
   text: string
   filled?: boolean
   onPress: () => void
+  disabled: boolean
 }
 interface WelcomeButtonsProps {
   buttons: ButtonConfig[]
   footer?: boolean
+  disabled?: boolean
 }
 
 export const WelcomeButtons = ({ buttons, footer = false }: WelcomeButtonsProps) => (
@@ -21,7 +23,13 @@ export const WelcomeButtons = ({ buttons, footer = false }: WelcomeButtonsProps)
       </CustomText>
     )}
     {buttons.map((button, index) => (
-      <PrimaryButton key={index} text={button.text} filled={button.filled ?? true} onPress={button.onPress} />
+      <PrimaryButton
+        key={index}
+        text={button.text}
+        filled={button.filled ?? true}
+        onPress={button.onPress}
+        disabled={button.disabled}
+      />
     ))}
   </View>
 )

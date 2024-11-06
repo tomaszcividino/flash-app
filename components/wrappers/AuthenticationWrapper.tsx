@@ -1,6 +1,5 @@
 import { SafeAreaView, StyleSheet, View } from 'react-native'
 
-import { InformationHeader } from '@/components/headers/information/InformationHeader'
 import { palette } from '@/constants/palette'
 import { WelcomeButtons } from '@/screens/onboarding/welcome/components/WelcomeButtons'
 import { ScreenNameHeader } from '../headers/screen/ScreenNameHeader'
@@ -9,6 +8,7 @@ interface ButtonData {
   text: string
   filled: boolean
   onPress: () => void
+  disabled: boolean
 }
 
 interface AuthenticationWrapperProps {
@@ -19,6 +19,7 @@ interface AuthenticationWrapperProps {
   footer?: boolean
   rightIcon?: 'info' | 'options' | 'refresh' | 'calendar' | 'addButton' | null
   leftIcon?: 'navigation' | 'drawer' | null
+  disabled?: boolean
 }
 
 export const AuthenticationWrapper = ({
@@ -31,7 +32,7 @@ export const AuthenticationWrapper = ({
 }: AuthenticationWrapperProps) => {
   return (
     <SafeAreaView style={styles.container}>
-      <InformationHeader leftIconType={leftIcon} rightIconType={rightIcon} />
+      {/* <InformationHeader leftIconType={leftIcon} rightIconType={rightIcon} /> */}
       <ScreenNameHeader text={screenName} />
       <View style={styles.contentContainer}>{children}</View>
       <View style={styles.buttonContainer}>

@@ -1,8 +1,8 @@
+import { useRouter } from 'expo-router'
 import { useForm } from 'react-hook-form'
 import { Alert } from 'react-native'
 
 import { useAuthenticateUser } from '@/api/useAuthenticateUser'
-
 export interface LoginFormData {
   email: string
   password: string
@@ -10,6 +10,7 @@ export interface LoginFormData {
 
 export const useLoginForm = () => {
   const { authenticateUser } = useAuthenticateUser()
+  const router = useRouter()
 
   const {
     control,
@@ -28,7 +29,15 @@ export const useLoginForm = () => {
     try {
       const response = await authenticateUser(data)
       if (response?.data?.authenticate) {
-        Alert.alert('Success', 'Login successful!')
+        const isProfileFilled = false
+
+        if (isProfileFilled) {
+          Alert.alert('Success', 'Login successful!')
+          router.replace('/(main)')
+        } else {
+          Alert.alert('Profile Incomplete', 'Please complete your profile.')
+          router.replace('/(main)/profile')
+        }
       }
     } catch (error) {
       console.error('Error during login:', error)

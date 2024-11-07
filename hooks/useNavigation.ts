@@ -4,7 +4,7 @@ export const useNavigation = () => {
   const router = useRouter()
 
   const navigateToAuthentication = () => {
-    router.push('/(auth)/authentication')
+    router.push('/auth')
   }
 
   return { navigateToAuthentication }

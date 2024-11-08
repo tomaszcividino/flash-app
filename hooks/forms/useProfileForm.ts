@@ -1,5 +1,4 @@
 import { useForm } from 'react-hook-form'
-
 export interface ProfileFormData {
   firstName: string
   lastName: string

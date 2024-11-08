@@ -1,6 +1,5 @@
 import { palette } from '@/constants/palette'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
-
 interface PrimaryButtonProps {
   text: string
   filled: boolean
@@ -43,8 +42,8 @@ const styles = StyleSheet.create({
     borderColor: palette.colors.purple.light
   },
   disabledButton: {
-    backgroundColor: palette.colors.grey.medium, // Grey background when disabled
-    borderColor: palette.colors.grey.medium // Maintain grey border for outlined style
+    backgroundColor: palette.colors.grey.medium,
+    borderColor: palette.colors.grey.medium
   },
   buttonText: {
     fontSize: 16
@@ -56,6 +55,6 @@ const styles = StyleSheet.create({
     color: palette.colors.purple.light
   },
   disabledText: {
-    color: palette.colors.black // Black text when disabled
+    color: palette.colors.black
   }
 })

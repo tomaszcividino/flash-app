@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { Alert } from 'react-native'
 
 import { useAuthenticateUser } from '@/api/useAuthenticateUser'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 export interface LoginFormData {
   email: string
   password: string
@@ -29,14 +30,13 @@ export const useLoginForm = () => {
     try {
       const response = await authenticateUser(data)
       if (response?.data?.authenticate) {
-        const isProfileFilled = false
+        await AsyncStorage.setItem('isLoggedIn', 'true')
 
-        if (isProfileFilled) {
-          Alert.alert('Success', 'Login successful!')
-          router.replace('/(main)')
+        const profileVisited = await AsyncStorage.getItem('profileVisited')
+        if (profileVisited) {
+          router.replace('/home')
         } else {
-          Alert.alert('Profile Incomplete', 'Please complete your profile.')
-          router.replace('/(main)/profile')
+          router.replace('/home/profile')
         }
       }
     } catch (error) {

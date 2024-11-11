@@ -9,5 +9,15 @@ export const typography = {
     submit: 'Submit',
     information:
       'We may use your email and devices for updates and tips on FugoFlash products and services, and for activities notifications. You can unsubscribe for free at any time in you notification settings.'
+  },
+  profile: {
+    createProfile: 'Create your profile'
+  }
+}
+
+export const urls = {
+  api: {
+    adminTenant: 'https://api.dev-fugo.com/admin/tenant',
+    cmsTenant: 'https://api.dev-fugo.com/cms/tenant'
   }
 }

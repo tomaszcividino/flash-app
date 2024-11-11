@@ -1,12 +1,12 @@
-import { gql, useMutation } from '@apollo/client'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useMutation } from '@apollo/client'
 import { useQueryClient } from '@tanstack/react-query'
+import { AUTHENTICATE_USER } from './mutations/authMutations'
 
+import AsyncStorage from '@react-native-async-storage/async-storage'
 interface AuthenticateInput {
   email: string
   password: string
 }
-
 interface AuthenticateResponse {
   authenticate: {
     auth: {
@@ -17,19 +17,6 @@ interface AuthenticateResponse {
     tenantId: string
   }
 }
-
-export const AUTHENTICATE_USER = gql`
-  mutation Authenticate($email: String!, $password: String!) {
-    authenticate(email: $email, password: $password) {
-      auth {
-        accessToken
-        refreshToken
-      }
-      teamId
-      tenantId
-    }
-  }
-`
 
 export const useAuthenticateUser = () => {
   const queryClient = useQueryClient()
@@ -45,9 +32,11 @@ export const useAuthenticateUser = () => {
 
       if (response?.data?.authenticate) {
         const { accessToken, refreshToken } = response.data.authenticate.auth
+        const { teamId } = response.data.authenticate
 
         await AsyncStorage.setItem('accessToken', accessToken)
         await AsyncStorage.setItem('refreshToken', refreshToken)
+        await AsyncStorage.setItem('teamId', teamId)
 
         queryClient.setQueryData(['isUserLoggedIn'], true)
 

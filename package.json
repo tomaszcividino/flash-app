@@ -15,8 +15,8 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@babel/types": "^7.26.0",
     "@apollo/client": "^3.11.8",
+    "@babel/types": "^7.26.0",
     "@expo/vector-icons": "^14.0.2",
     "@hookform/resolvers": "^3.9.1",
     "@react-native-async-storage/async-storage": "1.23.1",
@@ -27,6 +27,7 @@
     "@tanstack/react-query-persist-client": "^5.59.19",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
+    "apollo-link": "^1.2.14",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.37.2",

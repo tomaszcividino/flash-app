@@ -1,163 +1,83 @@
-import { Control, Controller, FieldErrors, useFormState } from 'react-hook-form'
-import { Keyboard, StyleSheet, TextInput, TouchableWithoutFeedback, View } from 'react-native'
+import { useFormState } from 'react-hook-form'
+import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
 
+import { useUpdateTenant } from '@/api/useUpdateTenant'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
+import { typography } from '@/constants/typography'
 import { ProfileFormData } from '@/hooks/forms/useProfileForm'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useRouter } from 'expo-router'
-
+import { handleDismissKeyboard } from '@/utils/handleDismissKeyboard'
+import { FormInput } from './ProfileInput'
 interface ProfileFormProps {
-  control: Control<ProfileFormData>
-  errors: FieldErrors<ProfileFormData>
-  trigger: (name?: keyof ProfileFormData | (keyof ProfileFormData)[]) => Promise<boolean>
+  control: any
+  errors: any
+  trigger: (name?: string | string[]) => Promise<boolean>
+  getValues: () => ProfileFormData
 }
 
-export const ProfileForm = ({ control, errors, trigger }: ProfileFormProps) => {
-  const { isValid } = useFormState({
-    control
-  })
-
-  const router = useRouter()
-
-  const firstNameBorderColor = errors.firstName ? palette.colors.red : palette.colors.grey.medium
-  const lastNameBorderColor = errors.lastName ? palette.colors.red : palette.colors.grey.medium
-  const companyNameBorderColor = errors.companyName ? palette.colors.red : palette.colors.grey.medium
-  const industryBorderColor = errors.industry ? palette.colors.red : palette.colors.grey.medium
-  const howDidYouFindUsBorderColor = errors.howDidYouFindUs ? palette.colors.red : palette.colors.grey.medium
+export const ProfileForm = ({ control, errors, trigger, getValues }: ProfileFormProps) => {
+  const { updateTenantData, loading, error } = useUpdateTenant()
+  const { isValid } = useFormState({ control })
 
   const handleProfileVisit = async () => {
-    try {
-      await AsyncStorage.setItem('profileVisited', 'true')
+    const data = getValues()
+    const email = 'test@test.com'
 
-      router.replace('/home')
-    } catch (error) {
-      console.error('Error marking profile as visited:', error)
-    }
+    await updateTenantData(email, data)
   }
 
   const buttonData = [{ text: 'Continue', onPress: handleProfileVisit, filled: true, disabled: !isValid }]
 
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+    <TouchableWithoutFeedback onPress={handleDismissKeyboard}>
       <View style={styles.container}>
         <AuthenticationWrapper screenName="New Account" rightIcon="info" buttonData={buttonData}>
-          <CustomText style={{ textAlign: 'center', fontSize: 30, marginBottom: 32 }}>Create your profile</CustomText>
-
-          <CustomText style={styles.label}>First Name</CustomText>
-          <Controller
+          <CustomText style={styles.text}>{typography.profile.createProfile}</CustomText>
+          <FormInput
             control={control}
             name="firstName"
+            label="First Name"
+            placeholder="First name"
             rules={{ required: 'First name is required' }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={[styles.input, { borderColor: firstNameBorderColor }]}
-                placeholder="Enter first name"
-                placeholderTextColor={palette.colors.grey.medium}
-                onBlur={() => {
-                  onBlur()
-                  trigger('firstName')
-                }}
-                onChangeText={(text) => {
-                  onChange(text)
-                  trigger('firstName')
-                }}
-                value={value}
-              />
-            )}
+            errors={errors}
+            trigger={trigger}
           />
-
-          <CustomText style={styles.label}>Last Name</CustomText>
-          <Controller
+          <FormInput
             control={control}
             name="lastName"
+            label="Last Name"
+            placeholder="Last name"
             rules={{ required: 'Last name is required' }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={[styles.input, { borderColor: lastNameBorderColor }]}
-                placeholder="Enter last name"
-                placeholderTextColor={palette.colors.grey.medium}
-                onBlur={() => {
-                  onBlur()
-                  trigger('lastName')
-                }}
-                onChangeText={(text) => {
-                  onChange(text)
-                  trigger('lastName')
-                }}
-                value={value}
-              />
-            )}
+            errors={errors}
+            trigger={trigger}
           />
-
-          <CustomText style={styles.label}>Company Name</CustomText>
-          <Controller
+          <FormInput
             control={control}
             name="companyName"
+            label="Company Name"
+            placeholder="Company name"
             rules={{ required: 'Company name is required' }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={[styles.input, { borderColor: companyNameBorderColor }]}
-                placeholder="Enter company name"
-                placeholderTextColor={palette.colors.grey.medium}
-                onBlur={() => {
-                  onBlur()
-                  trigger('companyName')
-                }}
-                onChangeText={(text) => {
-                  onChange(text)
-                  trigger('companyName')
-                }}
-                value={value}
-              />
-            )}
+            errors={errors}
+            trigger={trigger}
           />
-
-          <CustomText style={styles.label}>Industry</CustomText>
-          <Controller
+          <FormInput
             control={control}
             name="industry"
+            label="Industry"
+            placeholder="Industry"
             rules={{ required: 'Industry is required' }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={[styles.input, { borderColor: industryBorderColor }]}
-                placeholder="Enter industry"
-                placeholderTextColor={palette.colors.grey.medium}
-                onBlur={() => {
-                  onBlur()
-                  trigger('industry')
-                }}
-                onChangeText={(text) => {
-                  onChange(text)
-                  trigger('industry')
-                }}
-                value={value}
-              />
-            )}
+            errors={errors}
+            trigger={trigger}
           />
-
-          <CustomText style={styles.label}>How did you find us?</CustomText>
-          <Controller
+          <FormInput
             control={control}
             name="howDidYouFindUs"
+            label="How did you find us?"
+            placeholder="Enter info here"
             rules={{ required: 'This field is required' }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={[styles.input, { borderColor: howDidYouFindUsBorderColor }]}
-                placeholder="Enter how you found us"
-                placeholderTextColor={palette.colors.grey.medium}
-                onBlur={() => {
-                  onBlur()
-                  trigger('howDidYouFindUs')
-                }}
-                onChangeText={(text) => {
-                  onChange(text)
-                  trigger('howDidYouFindUs')
-                }}
-                value={value}
-              />
-            )}
+            errors={errors}
+            trigger={trigger}
           />
         </AuthenticationWrapper>
       </View>
@@ -171,16 +91,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: palette.colors.white
   },
-  label: {
-    fontSize: 15,
-    marginBottom: 8
-  },
-  input: {
-    height: 48,
-    borderWidth: 2,
-    marginBottom: 16,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    fontSize: 15
+  text: {
+    textAlign: 'center',
+    fontSize: 30,
+    marginBottom: 32
   }
 })

@@ -1,10 +1,12 @@
-import { ProfileFormData } from '@/hooks/forms/useProfileForm'
-import { ProfileForm } from '@/screens/main/profile/components/ProfileForm'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { SafeAreaView, StyleSheet } from 'react-native'
+
+import { ProfileFormData } from '@/hooks/forms/useProfileForm'
+import { ProfileForm } from '@/screens/main/profile/components/ProfileForm'
+
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const ProfileScreen = () => {
   const [isLoading, setIsLoading] = useState(true)
@@ -13,7 +15,8 @@ const ProfileScreen = () => {
   const {
     control,
     trigger,
-    formState: { errors }
+    formState: { errors },
+    getValues
   } = useForm<ProfileFormData>()
 
   const checkProfileStatus = async () => {
@@ -32,7 +35,7 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ProfileForm control={control} errors={errors} trigger={trigger} />
+      <ProfileForm control={control} errors={errors} trigger={trigger} getValues={getValues} />
     </SafeAreaView>
   )
 }

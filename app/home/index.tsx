@@ -1,9 +1,8 @@
-import { CustomText } from '@/components/typography/CustomText'
+import { useRouter } from 'expo-router'
+import { Button, SafeAreaView, StyleSheet } from 'react-native'
+
 import { palette } from '@/constants/palette'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useRouter } from 'expo-router'
-import React from 'react'
-import { Button, SafeAreaView, StyleSheet } from 'react-native'
 
 const HomeScreen = () => {
   const router = useRouter()
@@ -11,8 +10,9 @@ const HomeScreen = () => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('isLoggedIn')
-      // await AsyncStorage.removeItem('profileVisited')
-      await AsyncStorage.removeItem('welcomeScreenVisited')
+      await AsyncStorage.removeItem('accessToken')
+      await AsyncStorage.removeItem('profileVisited')
+      await AsyncStorage.removeItem('teamId')
 
       router.replace('/auth')
     } catch (error) {
@@ -22,8 +22,6 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <CustomText style={{ fontSize: 30, marginTop: 16, marginBottom: 8, paddingLeft: 20 }}>Your Screens</CustomText>
-      <CustomText style={{ fontSize: 15, paddingLeft: 20 }}>Connect to Screen to update playlist</CustomText>
       <Button title="Logout" onPress={handleLogout} />
     </SafeAreaView>
   )

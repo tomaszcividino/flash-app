@@ -1,11 +1,13 @@
 import { PrimaryButton } from '@/components/buttons/PrimaryButton'
+import { ScreenButton } from '@/components/buttons/ScreenButton'
+import { SecondaryButton } from '@/components/buttons/SecondaryButton'
 import { PaginationDots } from '@/components/pagination/PaginationDots'
 import { CustomText } from '@/components/typography/CustomText'
 import { palette } from '@/constants/palette'
 import usePermissionsModal from '@/hooks/modals/usePermissionsModal'
 import { useAsyncStorage } from '@/hooks/storage/useAsyncStorage'
 import { useRouter } from 'expo-router'
-import { Button, Modal, SafeAreaView, StyleSheet, View, useWindowDimensions } from 'react-native'
+import { Button, Image, Modal, SafeAreaView, StyleSheet, View, useWindowDimensions } from 'react-native'
 
 const HomeScreen = () => {
   const router = useRouter()
@@ -32,7 +34,7 @@ const HomeScreen = () => {
       await removeItem('isLoggedIn')
       await removeItem('accessToken')
       await removeItem('profileVisited')
-      await removeItem('isModalVisited')
+      // await removeItem('isModalVisited')
       await removeItem('teamId')
 
       router.replace('/auth')
@@ -41,8 +43,32 @@ const HomeScreen = () => {
     }
   }
 
+  const text = 'Please turn on your fugo flash and \n it will appear here'
+
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.textContainer}>
+        <CustomText style={styles.screenTitle}>Your Screens</CustomText>
+        <CustomText style={styles.screenSubtitle}>Connect to Screen to update playlist</CustomText>
+      </View>
+
+      <View style={{ alignItems: 'center', marginTop: 24 }}>
+        <ScreenButton
+          text="Order your Flash"
+          filled
+          onPress={() => console.log('123')}
+          imageSource={require('../../assets/images/headphones.webp')}
+        />
+      </View>
+
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 24 }}>
+        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <Image source={require('../../assets/images/screens.webp')} style={{ marginBottom: 10 }} />
+          <CustomText style={{ fontSize: 30, color: 'grey' }}>No screens found</CustomText>
+          <CustomText style={{ fontSize: 14, color: 'grey', textAlign: 'center', marginBottom: 10 }}>{text}</CustomText>
+        </View>
+        <SecondaryButton text="Add new screen" filled={false} onPress={() => {}} />
+      </View>
       <Button title="Logout" onPress={handleLogout} />
 
       <Modal
@@ -77,9 +103,18 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.colors.white,
-    justifyContent: 'center',
-    alignItems: 'center'
+    backgroundColor: palette.colors.white
+  },
+  textContainer: {
+    marginTop: 16,
+    marginHorizontal: 20
+  },
+  screenTitle: {
+    fontSize: 30,
+    marginBottom: 8
+  },
+  screenSubtitle: {
+    fontSize: 15
   },
   modalBackground: {
     flex: 1,

@@ -4,6 +4,9 @@ export const palette = {
       light: '#7048E8',
       dark: '#5028C6'
     },
+    blue: {
+      dark: '#3612A1'
+    },
     grey: {
       light: '#EEF0F2',
       medium: '#CACACA',

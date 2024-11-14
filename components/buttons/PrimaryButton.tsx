@@ -1,24 +1,33 @@
 import { palette } from '@/constants/palette'
-import { StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 interface PrimaryButtonProps {
   text: string
   filled: boolean
   onPress: any
   disabled?: boolean
+  icon?: any
 }
 
-export const PrimaryButton = ({ text, filled, onPress, disabled }: PrimaryButtonProps) => {
+export const PrimaryButton = ({ text, filled, onPress, disabled, icon }: PrimaryButtonProps) => {
   return (
     <TouchableOpacity
       style={[styles.button, filled ? styles.filled : styles.outlined, disabled && styles.disabledButton]}
       onPress={onPress}
       disabled={disabled}
     >
-      <Text
-        style={[styles.buttonText, filled ? styles.filledText : styles.outlinedText, disabled && styles.disabledText]}
-      >
-        {text}
-      </Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+        <Text
+          style={[
+            styles.buttonText,
+            filled ? styles.filledText : styles.outlinedText,
+            disabled && styles.disabledText,
+            icon && { marginLeft: 8 }
+          ]}
+        >
+          {text}
+        </Text>
+        {icon && <View style={styles.iconContainer}>{icon}</View>}
+      </View>
     </TouchableOpacity>
   )
 }
@@ -56,5 +65,9 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: palette.colors.black
+  },
+  iconContainer: {
+    marginLeft: 10,
+    marginTop: 4
   }
 })

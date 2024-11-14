@@ -1,5 +1,6 @@
+import React from 'react'
 import { useFormState } from 'react-hook-form'
-import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
 
 import { useUpdateTenant } from '@/api/useUpdateTenant'
 import { CustomText } from '@/components/typography/CustomText'
@@ -8,6 +9,7 @@ import { palette } from '@/constants/palette'
 import { typography } from '@/constants/typography'
 import { ProfileFormData } from '@/hooks/forms/useProfileForm'
 import { handleDismissKeyboard } from '@/utils/handleDismissKeyboard'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { FormInput } from './ProfileInput'
 interface ProfileFormProps {
   control: any
@@ -24,16 +26,28 @@ export const ProfileForm = ({ control, errors, trigger, getValues }: ProfileForm
     const data = getValues()
     const email = 'test@test.com'
 
-    await updateTenantData(email, data)
+    try {
+      await updateTenantData(email, data)
+      await AsyncStorage.setItem('profileVisited', 'true')
+    } catch (err) {
+      console.error('Error updating profile:', err)
+    }
   }
 
-  const buttonData = [{ text: 'Continue', onPress: handleProfileVisit, filled: true, disabled: !isValid }]
+  const buttonData = [{ text: 'Continue', onPress: handleProfileVisit, filled: true, disabled: !isValid || loading }]
 
   return (
     <TouchableWithoutFeedback onPress={handleDismissKeyboard}>
       <View style={styles.container}>
+        {loading && (
+          <View style={styles.spinnerContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        )}
+
         <AuthenticationWrapper screenName="New Account" rightIcon="info" buttonData={buttonData}>
           <CustomText style={styles.text}>{typography.profile.createProfile}</CustomText>
+
           <FormInput
             control={control}
             name="firstName"
@@ -95,5 +109,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 30,
     marginBottom: 32
+  },
+  spinnerContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10
   }
 })

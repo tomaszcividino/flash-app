@@ -7,32 +7,37 @@ interface ButtonConfig {
   text: string
   filled?: boolean
   onPress: () => void
-  disabled: boolean
+  disabled?: boolean
+  icon: JSX.Element
 }
 interface WelcomeButtonsProps {
   buttons: ButtonConfig[]
   footer?: boolean
   disabled?: boolean
+  icon?: JSX.Element
 }
 
-export const WelcomeButtons = ({ buttons, footer = false }: WelcomeButtonsProps) => (
-  <View style={styles.buttonsContainer}>
-    {footer && (
-      <CustomText style={{ fontSize: 12, paddingHorizontal: 20, marginBottom: 32 }}>
-        {typography.authentication.information}
-      </CustomText>
-    )}
-    {buttons.map((button, index) => (
-      <PrimaryButton
-        key={index}
-        text={button.text}
-        filled={button.filled ?? true}
-        onPress={button.onPress}
-        disabled={button.disabled}
-      />
-    ))}
-  </View>
-)
+export const WelcomeButtons = ({ buttons, icon, footer = false }: WelcomeButtonsProps) => {
+  return (
+    <View style={styles.buttonsContainer}>
+      {footer && (
+        <CustomText style={{ fontSize: 12, paddingHorizontal: 20, marginBottom: 32 }}>
+          {typography.authentication.information}
+        </CustomText>
+      )}
+      {buttons.map((button, index) => (
+        <PrimaryButton
+          key={index}
+          text={button.text}
+          filled={button.filled ?? true}
+          onPress={button.onPress}
+          disabled={button.disabled}
+          icon={button.icon}
+        />
+      ))}
+    </View>
+  )
+}
 
 const styles = StyleSheet.create({
   buttonsContainer: {

@@ -9,16 +9,14 @@ interface ButtonData {
   filled: boolean
   onPress: () => void
   disabled: boolean
+  icon?: JSX.Element
 }
-
 interface AuthenticationWrapperProps {
   infoVisible?: boolean
   screenName: string
   buttonData?: ButtonData[]
   children: React.ReactNode
   footer?: boolean
-  rightIcon?: 'info' | 'options' | 'refresh' | 'calendar' | 'addButton' | null
-  leftIcon?: 'navigation' | 'drawer' | null
   disabled?: boolean
 }
 
@@ -26,13 +24,10 @@ export const AuthenticationWrapper = ({
   screenName = '',
   buttonData = [],
   children,
-  footer = false,
-  rightIcon,
-  leftIcon
+  footer = false
 }: AuthenticationWrapperProps) => {
   return (
     <SafeAreaView style={styles.container}>
-      {/* <InformationHeader leftIconType={leftIcon} rightIconType={rightIcon} /> */}
       <ScreenNameHeader text={screenName} />
       <View style={styles.contentContainer}>{children}</View>
       <View style={styles.buttonContainer}>

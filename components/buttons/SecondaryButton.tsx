@@ -1,16 +1,18 @@
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from 'react-native'
 
 import { palette } from '@/constants/palette'
 import { Ionicons } from '@expo/vector-icons'
-
 interface IconButtonProps {
   text: string
   filled: boolean
   onPress: () => void
+  style?: StyleProp<ViewStyle>
+  textStyle?: StyleProp<TextStyle>
+  iconStyle?: StyleProp<TextStyle>
 }
 
-export const SecondaryButton = ({ text, filled, onPress }: IconButtonProps) => {
+export const SecondaryButton = ({ text, filled, onPress, style, textStyle, iconStyle }: IconButtonProps) => {
   const [pressed, setPressed] = useState(false)
 
   const handlePressIn = () => {
@@ -32,7 +34,8 @@ export const SecondaryButton = ({ text, filled, onPress }: IconButtonProps) => {
             : filled
               ? palette.colors.purple.light
               : palette.colors.white
-        }
+        },
+        style
       ]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -42,6 +45,7 @@ export const SecondaryButton = ({ text, filled, onPress }: IconButtonProps) => {
         <Text
           style={[
             styles.buttonText,
+            textStyle,
             {
               color: pressed || filled ? palette.colors.white : palette.colors.purple.light
             }
@@ -51,7 +55,7 @@ export const SecondaryButton = ({ text, filled, onPress }: IconButtonProps) => {
         </Text>
         <Ionicons
           name="add"
-          style={styles.icon}
+          style={[styles.icon, iconStyle]}
           size={16}
           color={pressed || filled ? palette.colors.white : palette.colors.purple.light}
         />

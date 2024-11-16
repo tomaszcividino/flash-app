@@ -4,7 +4,6 @@ import { StyleSheet, TextInput, View } from 'react-native'
 import { CustomText } from '@/components/typography/CustomText'
 import { palette } from '@/constants/palette'
 import { LoginFormData } from '@/hooks/forms/useLoginForm'
-
 interface LoginFormProps {
   control: Control<LoginFormData>
   errors: FieldErrors<LoginFormData>

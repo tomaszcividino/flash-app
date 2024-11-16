@@ -7,7 +7,7 @@ import usePermissionsModal from '@/hooks/modals/usePermissionsModal'
 import { useAsyncStorage } from '@/hooks/storage/useAsyncStorage'
 import { useRouter } from 'expo-router'
 import { Button, Modal, SafeAreaView, StyleSheet, View, useWindowDimensions } from 'react-native'
-import { NoScreensFound } from './NoScreensFound'
+import { NoScreensFound } from '../../components/NoScreensFound'
 
 const HomeScreen = () => {
   const router = useRouter()
@@ -33,9 +33,10 @@ const HomeScreen = () => {
     try {
       await removeItem('isLoggedIn')
       await removeItem('accessToken')
-      // await removeItem('profileVisited')
-      // await removeItem('isModalVisited')
+      await removeItem('profileVisited')
+      await removeItem('isModalVisited')
       await removeItem('teamId')
+      await removeItem('welcomeScreenVisited')
 
       router.replace('/auth')
     } catch (error) {

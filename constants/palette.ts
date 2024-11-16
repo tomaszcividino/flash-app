@@ -10,7 +10,7 @@ export const palette = {
     grey: {
       light: '#EEF0F2',
       medium: '#CACACA',
-      dark: '#ACB5BD'
+      dark: '#7B838A'
     },
 
     white: '#FFFFFF',

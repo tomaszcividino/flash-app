@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { ActivityIndicator, SafeAreaView, StyleSheet } from 'react-native'
+import { SafeAreaView, StyleSheet } from 'react-native'
 
 import { ProfileFormData } from '@/hooks/forms/useProfileForm'
 import { ProfileForm } from '@/screens/main/profile/components/ProfileForm'
@@ -29,14 +29,6 @@ const ProfileScreen = () => {
     }
     checkProfileStatus()
   }, [])
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </SafeAreaView>
-    )
-  }
 
   return (
     <SafeAreaView style={styles.container}>

@@ -1,12 +1,13 @@
+import { useState } from 'react'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
+
 import { RefreshIcon } from '@/assets/icons/RefreshIcon'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
-import React, { useState } from 'react'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
-import { NoScreensFound } from './NoScreensFound'
+import { NoScreensFound } from '../../components/NoScreensFound'
 
-const screen = () => {
+export default function SingleScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [screenText, setScreenText] = useState('New Screen Text')
 
@@ -19,7 +20,9 @@ const screen = () => {
     }, 2000)
   }
 
-  const buttonData = [{ text: 'Refresh', icon: <RefreshIcon />, onPress: handleRefresh, filled: false }]
+  const buttonData = [
+    { text: 'Refresh', icon: <RefreshIcon />, onPress: handleRefresh, filled: false, disabled: false }
+  ]
 
   return (
     <AuthenticationWrapper screenName="Add new screen" buttonData={buttonData}>
@@ -37,8 +40,6 @@ const screen = () => {
     </AuthenticationWrapper>
   )
 }
-
-export default screen
 
 const styles = StyleSheet.create({
   container: {

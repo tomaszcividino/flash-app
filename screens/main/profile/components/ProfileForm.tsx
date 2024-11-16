@@ -1,6 +1,6 @@
 import React from 'react'
 import { useFormState } from 'react-hook-form'
-import { ActivityIndicator, StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
+import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
 
 import { useUpdateTenant } from '@/api/useUpdateTenant'
 import { CustomText } from '@/components/typography/CustomText'
@@ -10,6 +10,7 @@ import { typography } from '@/constants/typography'
 import { ProfileFormData } from '@/hooks/forms/useProfileForm'
 import { handleDismissKeyboard } from '@/utils/handleDismissKeyboard'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useExpoRouter } from 'expo-router/build/global-state/router-store'
 import { FormInput } from './ProfileInput'
 interface ProfileFormProps {
   control: any
@@ -21,6 +22,7 @@ interface ProfileFormProps {
 export const ProfileForm = ({ control, errors, trigger, getValues }: ProfileFormProps) => {
   const { updateTenantData, loading, error } = useUpdateTenant()
   const { isValid } = useFormState({ control })
+  const router = useExpoRouter()
 
   const handleProfileVisit = async () => {
     const data = getValues()
@@ -29,6 +31,8 @@ export const ProfileForm = ({ control, errors, trigger, getValues }: ProfileForm
     try {
       await updateTenantData(email, data)
       await AsyncStorage.setItem('profileVisited', 'true')
+
+      router.replace('/home')
     } catch (err) {
       console.error('Error updating profile:', err)
     }
@@ -39,12 +43,6 @@ export const ProfileForm = ({ control, errors, trigger, getValues }: ProfileForm
   return (
     <TouchableWithoutFeedback onPress={handleDismissKeyboard}>
       <View style={styles.container}>
-        {loading && (
-          <View style={styles.spinnerContainer}>
-            <ActivityIndicator size="large" color="#0000ff" />
-          </View>
-        )}
-
         <AuthenticationWrapper screenName="New Account" rightIcon="info" buttonData={buttonData}>
           <CustomText style={styles.text}>{typography.profile.createProfile}</CustomText>
 

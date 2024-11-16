@@ -12,7 +12,7 @@ export const NoScreensFound = ({ button }: { button: boolean }) => {
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
-        <Image source={require('../../assets/images/screens.webp')} style={styles.image} />
+        <Image source={require('../assets/images/screens.webp')} style={styles.image} />
         <CustomText style={styles.mainText}>No screens found</CustomText>
         <CustomText style={styles.secondaryText}>
           {`Please turn on your fugo flash and \n it will appear here`}

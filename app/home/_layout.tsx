@@ -11,7 +11,9 @@ import { useRouter } from 'expo-router'
 import HomeScreen from '.'
 import AboutScreen from './about'
 import AccountScreen from './account'
+import AddScreen from './addscreen'
 import BillingScreen from './billing'
+import ConnetToWifi from './connectwifi'
 import HelpScreen from './help'
 import ProfileScreen from './profile'
 import SingleScreen from './screen'
@@ -48,6 +50,8 @@ export default function Layout() {
         <Drawer.Screen name="help" component={HelpScreen} options={headerOptions} />
         <Drawer.Screen name="about" component={AboutScreen} options={headerOptions} />
         <Drawer.Screen name="screen" component={SingleScreen} options={headerOptions} />
+        <Drawer.Screen name="addscreen" component={AddScreen} options={headerOptions} />
+        <Drawer.Screen name="connectwifi" component={ConnetToWifi} options={headerOptions} />
       </Drawer.Navigator>
     </>
   )

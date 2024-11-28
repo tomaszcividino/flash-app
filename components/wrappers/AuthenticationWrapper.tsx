@@ -3,7 +3,6 @@ import { SafeAreaView, StyleSheet, View } from 'react-native'
 import { palette } from '@/constants/palette'
 import { WelcomeButtons } from '@/screens/onboarding/welcome/components/WelcomeButtons'
 import { ScreenNameHeader } from '../headers/screen/ScreenNameHeader'
-
 interface ButtonData {
   text: string
   filled: boolean

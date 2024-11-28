@@ -14,8 +14,7 @@ const styles = StyleSheet.create({
   textContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
-    height: 56
+    width: '100%'
   },
   text: {
     textAlign: 'center',

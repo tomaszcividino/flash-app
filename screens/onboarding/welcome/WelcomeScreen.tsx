@@ -9,6 +9,7 @@ import { getWindowWidth } from '@/utils/getWindowWidth'
 import { PaginationDots } from './components/PaginationDots'
 import { WelcomeSlider } from './components/WelcomeSlider'
 
+import { palette } from '@/constants/palette'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 interface ScrollEvent {
   (event: NativeSyntheticEvent<NativeScrollEvent>): void
@@ -27,11 +28,13 @@ export const WelcomeScreen = () => {
     router.push('/auth')
   }
 
-  const buttonData = [{ text: typography.onboarding.getStarted, onPress: handleGetStarted, filled: true }]
+  const buttonData = [
+    { text: typography.onboarding.getStarted, onPress: handleGetStarted, filled: true, disabled: false }
+  ]
 
   return (
     <SafeAreaView style={styles.container}>
-      <AuthenticationWrapper screenName={typography.onboarding.fugoFlash} buttonData={buttonData} rightIcon="info">
+      <AuthenticationWrapper screenName={typography.onboarding.fugoFlash} buttonData={buttonData}>
         <WelcomeSlider slides={slides} onScroll={handleScroll} />
         <PaginationDots slides={slides} activeIndex={activeIndex} />
       </AuthenticationWrapper>
@@ -42,9 +45,9 @@ export const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white'
+    backgroundColor: palette.colors.white
   },
   safeArea: {
-    backgroundColor: 'white'
+    backgroundColor: palette.colors.white
   }
 })

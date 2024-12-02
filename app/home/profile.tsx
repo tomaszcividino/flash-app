@@ -1,11 +1,10 @@
 import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { SafeAreaView, StyleSheet } from 'react-native'
 
 import { ProfileFormData } from '@/hooks/forms/useProfileForm'
 import { ProfileForm } from '@/screens/main/profile/components/ProfileForm'
-
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const ProfileScreen = () => {
@@ -19,19 +18,17 @@ const ProfileScreen = () => {
     getValues
   } = useForm<ProfileFormData>()
 
-  const checkProfileStatus = async () => {
-    const profileVisited = await AsyncStorage.getItem('profileVisited')
-    if (profileVisited === 'true') {
-      router.replace('/home')
-    } else {
-      setIsLoading(false)
+  useEffect(() => {
+    const checkProfileStatus = async () => {
+      const profileVisited = await AsyncStorage.getItem('profileVisited')
+      if (profileVisited === 'true') {
+        router.replace('/home')
+      } else {
+        setIsLoading(false)
+      }
     }
-  }
-
-  if (isLoading) {
     checkProfileStatus()
-    return null
-  }
+  }, [])
 
   return (
     <SafeAreaView style={styles.container}>
@@ -43,6 +40,10 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1
+  },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 })
 

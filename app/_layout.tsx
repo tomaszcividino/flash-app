@@ -3,13 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
-import { Stack, useRouter } from 'expo-router'
+import { Stack } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 
 const queryClient = new QueryClient()
 
 const Layout = () => {
-  const router = useRouter()
   const [isChecked, setIsChecked] = useState(false)
 
   const persister = createAsyncStoragePersister({

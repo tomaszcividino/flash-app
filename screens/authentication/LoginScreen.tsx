@@ -10,19 +10,12 @@ import { SocialIcons } from './components/SocialIcons'
 export const LoginScreen = () => {
   const { control, handleSubmit, errors, trigger, onSubmit } = useLoginForm()
 
-  const buttonData = [{ text: 'Login', onPress: handleSubmit(onSubmit), filled: true }]
+  const buttonData = [{ text: 'Login', onPress: handleSubmit(onSubmit), filled: true, disabled: false }]
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container}>
-        <AuthenticationWrapper
-          rightIcon="info"
-          leftIcon="navigation"
-          infoVisible
-          screenName="Get Started"
-          footer
-          buttonData={buttonData}
-        >
+        <AuthenticationWrapper infoVisible screenName="Get Started" footer buttonData={buttonData}>
           <View style={styles.centeredContent}>
             <CustomText style={styles.welcomeText}>{typography.authentication.welcome}</CustomText>
 

@@ -1,11 +1,13 @@
+import { GreenDotIcon } from '@/assets/icons/GreenDotIcon'
 import { RefreshIcon } from '@/assets/icons/RefreshIcon'
+import { WifiIcon } from '@/assets/icons/WifiIcon'
 import { NoScreensFound } from '@/components/NoScreensFound'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, PermissionsAndroid, Platform, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, PermissionsAndroid, Platform, Pressable, StyleSheet, View } from 'react-native'
 import { BleManager, Device } from 'react-native-ble-plx'
 
 // Create the BleManager instance
@@ -16,11 +18,11 @@ export default function Index() {
   const [scanning, setScanning] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [screenText, setScreenText] = useState('Searching...')
-
+  const [connectionState, setConnectionState] = useState<string>('Disconnected')
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    // Request permissions for Android and start scanning automatically
     if (Platform.OS === 'android') {
       requestAndroidPermissions().then(startScan)
     } else {
@@ -53,15 +55,15 @@ export default function Index() {
 
   const startScan = async () => {
     setScanning(true)
-    setDevices([]) // Clear the devices list
+    setDevices([])
     setIsRefreshing(true)
-    setScreenText('Searching...') // Initial text during scanning
+    setScreenText('Searching...')
 
-    // First, get the already connected devices
     const connectedDevices = await bleManager.connectedDevices([])
-    setDevices(connectedDevices) // Add already connected devices to the list
+    if (connectedDevices.length > 0) {
+      setDevices(connectedDevices)
+    }
 
-    // Start scanning for nearby devices
     bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         console.log('Error scanning:', error)
@@ -71,7 +73,6 @@ export default function Index() {
         return
       }
 
-      // Filter by UUID
       if (device?.serviceUUIDs?.includes('aabbccdd-1234-5678-9101-112233445566')) {
         setDevices((prevDevices) => {
           if (!prevDevices.find((dev) => dev.id === device.id)) {
@@ -82,25 +83,104 @@ export default function Index() {
       }
     })
 
-    // Stop scanning after 5 seconds
     setTimeout(() => {
       bleManager.stopDeviceScan()
       setScanning(false)
       setIsRefreshing(false)
 
       if (devices.length === 0) {
-        setScreenText('No Screens Found') // Update if no devices found
+        setScreenText('No Screens Found')
       } else {
         setScreenText('Select Screen')
       }
     }, 5000)
   }
 
+  // const connectToDevice = async (device: Device) => {
+  //   try {
+  //     console.log(`Connecting to device: ${device.id}`)
+  //     const deviceConnection = await bleManager.connectToDevice(device.id)
+  //     setConnectedDevice(deviceConnection)
+  //     console.log('Successfully connected to device:', deviceConnection.id)
+
+  //     await deviceConnection.discoverAllServicesAndCharacteristics()
+  //     console.log('Discovered all services and characteristics')
+
+  //     const services = await deviceConnection.services()
+  //     for (const service of services) {
+  //       const characteristics = await deviceConnection.characteristicsForService(service.uuid)
+  //       characteristics.forEach((characteristic) => {
+  //         console.log(`Characteristic UUID: ${characteristic.uuid}`)
+  //       })
+  //     }
+
+  //     sendWiFiCredentials(deviceConnection)
+  //     bleManager.stopDeviceScan()
+
+  //     router.push('/home/addscreen')
+  //   } catch (e) {
+  //     console.error('Failed to connect to device:', e)
+  //   }
+  // }
+
+  // const sendWiFiCredentials = async (deviceConnection: Device) => {
+  //   try {
+  //     const serviceUUID = 'aabbccdd-1234-5678-9101-112233445566'
+  //     const ssidCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445568'
+  //     const notificationCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445569'
+
+  //     const ssid = 'CGA2121_QV5rJnx'
+  //     const password = 'YhgqgkqGKsdR5PR83G'
+
+  //     const credentials = JSON.stringify({ ssid, password })
+  //     const encodedCredentials = base64.encode(credentials)
+
+  //     console.log('Encoded Wi-Fi Credentials:', encodedCredentials)
+
+  //     await deviceConnection.monitorCharacteristicForService(
+  //       serviceUUID,
+  //       notificationCharacteristicUUID,
+  //       (error, characteristic) => {
+  //         if (error) {
+  //           console.warn('Error enabling notifications:', error)
+  //         } else {
+  //           const msg = base64.decode(characteristic?.value || '')
+  //           console.log('Notification received:', msg)
+  //         }
+  //       }
+  //     )
+
+  //     await deviceConnection.writeCharacteristicWithResponseForService(
+  //       serviceUUID,
+  //       ssidCharacteristicUUID,
+  //       encodedCredentials
+  //     )
+  //     console.log('Wi-Fi credentials submitted successfully.')
+  //   } catch (error) {
+  //     console.error('Error sending Wi-Fi credentials:', error)
+  //   }
+  // }
+
   const renderDevice = ({ item }: { item: Device }) => (
-    <View style={styles.deviceItem}>
-      <Text onPress={() => router.push('/home/addscreen')}>{item.name ? item.name : 'Unnamed device'}</Text>
-      <Text>{item.id}</Text>
-    </View>
+    <Pressable
+      // onPress={() => connectToDevice(item)}
+      onPress={() => router.push('/home/addscreen')}
+      style={({ pressed }) => [styles.deviceItem, pressed && { opacity: 0.7 }]}
+    >
+      <View>
+        <View style={{ flexDirection: 'row', width: 250, alignItems: 'center', marginBottom: 8 }}>
+          <GreenDotIcon />
+          <CustomText style={{ fontSize: 20, textAlign: 'center', marginLeft: 4 }}>
+            {item.name} {item.id}
+          </CustomText>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <WifiIcon />
+          <CustomText style={{ fontSize: 12, color: '#007AFF', marginLeft: 4 }}>Ready to pair</CustomText>
+        </View>
+      </View>
+    </Pressable>
   )
 
   const buttonData = [
@@ -108,7 +188,6 @@ export default function Index() {
       text: 'Refresh',
       onPress: startScan,
       filled: false,
-      disabled: scanning,
       icon: <RefreshIcon />
     }
   ]
@@ -117,6 +196,7 @@ export default function Index() {
     <AuthenticationWrapper screenName="Add new screen" buttonData={buttonData}>
       <View style={styles.centeredContainer}>
         <CustomText style={{ fontSize: 30 }}>{screenText}</CustomText>
+        <CustomText style={{ fontSize: 18, marginTop: 10 }}>{`Connection Status: ${connectionState}`}</CustomText>
       </View>
 
       {isRefreshing ? (
@@ -138,17 +218,20 @@ const styles = StyleSheet.create({
     padding: 20
   },
   spinnerContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    marginTop: 50,
     alignItems: 'center'
   },
   deviceList: {
+    marginTop: 20,
     width: '100%',
-    marginTop: 20
+    marginBottom: 20
   },
   deviceItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd'
+    backgroundColor: '#F4F4F5',
+    marginVertical: 10,
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
   }
 })

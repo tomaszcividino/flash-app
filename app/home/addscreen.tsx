@@ -1,40 +1,50 @@
+import { WifiIcon } from '@/assets/icons/WifiIcon'
+import { TvImage } from '@/assets/images/tvImage'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
-import usePermissionsModal from '@/hooks/modals/usePermissionsModal'
-import { useAsyncStorage } from '@/hooks/storage/useAsyncStorage'
 import { useRouter } from 'expo-router'
-import { SafeAreaView, StyleSheet, View, useWindowDimensions } from 'react-native'
+import { useEffect, useState } from 'react'
+import { SafeAreaView, StyleSheet, View } from 'react-native'
+import { BleManager, Device } from 'react-native-ble-plx' // Import BLE manager for BLE operations
 
 export default function AddScreen() {
   const router = useRouter()
-  const { removeItem } = useAsyncStorage()
-  const { isModalVisible, currentStep, setIsModalVisible, handleNetworkPermission, handleNotificationsPermission } =
-    usePermissionsModal()
-  const { width } = useWindowDimensions()
+  const [connectedDevices, setConnectedDevices] = useState<Device[]>([]) // State to store connected BLE devices
+  const [bleManager] = useState(new BleManager()) // Initialize BLE Manager
 
-  const slides = [
-    {
-      titleUpper: 'Local Network Permission',
-      titleLower:
-        "To use the Fugo Flash app's basic functionality, you must allow local network access. \n\n This is only used to set up and communicate with the Fugo device on your network."
-    },
-    {
-      titleUpper: 'Stay Connected and Updated',
-      titleLower:
-        'Turn on notifications to receive Fugo Flash app announcements, offers, and more. \n\n You can update your notification preferences anytime in your app settings.'
+  useEffect(() => {
+    // Function to fetch connected BLE devices when the screen loads
+    const fetchConnectedBleDevices = async () => {
+      try {
+        const devices = await bleManager.connectedDevices([]) // Fetch connected devices
+        setConnectedDevices(devices) // Store the devices in the state
+        console.log('Connected BLE Devices:', devices) // Log the devices to the console
+      } catch (error) {
+        console.error('Error fetching connected BLE devices:', error)
+      }
     }
-  ]
+
+    // Fetch connected devices initially
+    fetchConnectedBleDevices()
+
+    // Listen for device connection state changes (optional for debugging)
+    bleManager.onStateChange((state) => {
+      console.log('BLE Manager State:', state)
+      if (state === 'PoweredOn') {
+        fetchConnectedBleDevices() // Retry fetching connected devices if Bluetooth is powered on
+      }
+    }, true)
+
+    // Clean up BLE manager when the component unmounts
+    return () => {
+      bleManager.destroy()
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
-      await removeItem('isLoggedIn')
-      await removeItem('accessToken')
-      await removeItem('profileVisited')
-      await removeItem('isModalVisited')
-      await removeItem('teamId')
-      await removeItem('welcomeScreenVisited')
-
+      // Handle logout functionality
       router.replace('/auth')
     } catch (error) {
       console.error('Error during logout:', error)
@@ -68,14 +78,41 @@ export default function AddScreen() {
             <CustomText weight="bold" style={{ fontSize: 30, textAlign: 'center', letterSpacing: -1 }}>
               LG TV- PXLMFEFHJB33
             </CustomText>
-            <CustomText
-              style={{ fontSize: 12, textAlign: 'center', marginTop: 12, color: palette.colors.purple.light }}
-            >
-              Ready to pair
-            </CustomText>
-            {/* This view will now be centered */}
-            <View style={{ width: 280, height: 156, backgroundColor: '#7B838A' }} />
+
+            {/* Align PairingIcon and Ready to pair text vertically */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 40 }}>
+              <WifiIcon />
+              <CustomText
+                style={{
+                  fontSize: 12,
+                  textAlign: 'center',
+                  color: palette.colors.purple.light,
+                  marginLeft: 4, // Adjust spacing between icon and text
+                  lineHeight: 16 // Ensure the text height is aligned with the icon
+                }}
+              >
+                Ready to pair
+              </CustomText>
+            </View>
+
+            <TvImage />
           </View>
+        </View>
+
+        {/* Display the list of connected devices */}
+        <View style={styles.connectedDevicesContainer}>
+          <CustomText style={styles.connectedDevicesTitle}>Connected Devices:</CustomText>
+          {connectedDevices.length > 0 ? (
+            <View>
+              {connectedDevices.map((device, index) => (
+                <CustomText key={index} style={styles.deviceText}>
+                  {device.name || 'Unnamed Device'} - {device.id}
+                </CustomText>
+              ))}
+            </View>
+          ) : (
+            <CustomText style={styles.deviceText}>No connected devices found.</CustomText>
+          )}
         </View>
       </SafeAreaView>
     </AuthenticationWrapper>
@@ -111,5 +148,18 @@ const styles = StyleSheet.create({
     borderColor: '#EEF0F2',
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  connectedDevicesContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20
+  },
+  connectedDevicesTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8
+  },
+  deviceText: {
+    fontSize: 16,
+    marginBottom: 6
   }
 })

@@ -3,6 +3,7 @@ import { TvImage } from '@/assets/images/tvImage'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
+import AsyncStorage from '@react-native-async-storage/async-storage' // Import AsyncStorage for SSID storage
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { SafeAreaView, StyleSheet, View } from 'react-native'
@@ -11,28 +12,51 @@ import { BleManager, Device } from 'react-native-ble-plx' // Import BLE manager 
 export default function AddScreen() {
   const router = useRouter()
   const [connectedDevices, setConnectedDevices] = useState<Device[]>([]) // State to store connected BLE devices
+  const [savedSSIDs, setSavedSSIDs] = useState<string[]>([]) // State to store saved SSIDs
   const [bleManager] = useState(new BleManager()) // Initialize BLE Manager
 
+  // Fetch saved SSIDs from AsyncStorage
+  const fetchSavedSSIDs = async () => {
+    try {
+      const savedSSIDs = await AsyncStorage.getItem('myssids') // Assuming you're storing SSIDs under 'myssids'
+      if (savedSSIDs) {
+        const ssidList = JSON.parse(savedSSIDs)
+        console.log('Saved SSIDs:', ssidList)
+        return ssidList
+      } else {
+        console.log('No saved SSIDs found.')
+        return []
+      }
+    } catch (error) {
+      console.error('Error fetching saved SSIDs:', error)
+      return []
+    }
+  }
+
+  // Fetch connected BLE devices and saved SSIDs when the component mounts
   useEffect(() => {
-    // Function to fetch connected BLE devices when the screen loads
-    const fetchConnectedBleDevices = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch connected BLE devices
         const devices = await bleManager.connectedDevices([]) // Fetch connected devices
-        setConnectedDevices(devices) // Store the devices in the state
-        console.log('Connected BLE Devices:', devices) // Log the devices to the console
+        setConnectedDevices(devices)
+        console.log('Connected BLE Devices:', devices)
+
+        // Fetch saved SSIDs and set them in state
+        const ssids = await fetchSavedSSIDs()
+        setSavedSSIDs(ssids)
       } catch (error) {
-        console.error('Error fetching connected BLE devices:', error)
+        console.error('Error during fetchData:', error)
       }
     }
 
-    // Fetch connected devices initially
-    fetchConnectedBleDevices()
+    fetchData()
 
     // Listen for device connection state changes (optional for debugging)
     bleManager.onStateChange((state) => {
       console.log('BLE Manager State:', state)
       if (state === 'PoweredOn') {
-        fetchConnectedBleDevices() // Retry fetching connected devices if Bluetooth is powered on
+        fetchData() // Retry fetching if Bluetooth is powered on
       }
     }, true)
 
@@ -112,6 +136,20 @@ export default function AddScreen() {
             </View>
           ) : (
             <CustomText style={styles.deviceText}>No connected devices found.</CustomText>
+          )}
+
+          {/* Display saved SSIDs */}
+          <CustomText style={styles.connectedDevicesTitle}>Saved SSIDs:</CustomText>
+          {savedSSIDs.length > 0 ? (
+            <View>
+              {savedSSIDs.map((ssid, index) => (
+                <CustomText key={index} style={styles.deviceText}>
+                  {ssid}
+                </CustomText>
+              ))}
+            </View>
+          ) : (
+            <CustomText style={styles.deviceText}>No saved SSIDs found.</CustomText>
           )}
         </View>
       </SafeAreaView>

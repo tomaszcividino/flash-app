@@ -5,13 +5,18 @@ import { NoScreensFound } from '@/components/NoScreensFound'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, PermissionsAndroid, Platform, Pressable, StyleSheet, View } from 'react-native'
+import base64 from 'react-native-base64'
 import { BleManager, Device } from 'react-native-ble-plx'
 
 // Create the BleManager instance
 const bleManager = new BleManager()
+
+const serviceUUID = 'aabbccdd-1234-5678-9101-112233445566'
+const ssidListCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445567'
 
 export default function Index() {
   const [devices, setDevices] = useState<Device[]>([])
@@ -20,6 +25,7 @@ export default function Index() {
   const [screenText, setScreenText] = useState('Searching...')
   const [connectionState, setConnectionState] = useState<string>('Disconnected')
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null)
+  const [ssidList, setSsidList] = useState<string[]>([]) // Holds the SSID list from the device
   const router = useRouter()
 
   useEffect(() => {
@@ -49,7 +55,7 @@ export default function Index() {
         console.log('Permissions not granted')
       }
     } catch (err) {
-      console.warn(err)
+      console.warn('Permissions error:', err)
     }
   }
 
@@ -59,12 +65,15 @@ export default function Index() {
     setIsRefreshing(true)
     setScreenText('Searching...')
 
-    const connectedDevices = await bleManager.connectedDevices([])
+    const connectedDevices = await bleManager.connectedDevices([serviceUUID])
     if (connectedDevices.length > 0) {
+      console.log('Connected devices:', connectedDevices)
       setDevices(connectedDevices)
+    } else {
+      console.log('No devices connected.')
     }
 
-    bleManager.startDeviceScan(null, null, (error, device) => {
+    bleManager.startDeviceScan([serviceUUID], null, (error, device) => {
       if (error) {
         console.log('Error scanning:', error)
         setScanning(false)
@@ -73,9 +82,11 @@ export default function Index() {
         return
       }
 
-      if (device?.serviceUUIDs?.includes('aabbccdd-1234-5678-9101-112233445566')) {
+      if (device?.serviceUUIDs?.includes(serviceUUID)) {
+        console.log('Discovered device:', device.name, device.id)
         setDevices((prevDevices) => {
           if (!prevDevices.find((dev) => dev.id === device.id)) {
+            console.log('Adding new device to the list')
             return [...prevDevices, device]
           }
           return prevDevices
@@ -90,81 +101,110 @@ export default function Index() {
 
       if (devices.length === 0) {
         setScreenText('No Screens Found')
+        console.log('No screens found.')
       } else {
         setScreenText('Select Screen')
+        console.log('Devices found:', devices)
       }
     }, 5000)
   }
 
-  // const connectToDevice = async (device: Device) => {
-  //   try {
-  //     console.log(`Connecting to device: ${device.id}`)
-  //     const deviceConnection = await bleManager.connectToDevice(device.id)
-  //     setConnectedDevice(deviceConnection)
-  //     console.log('Successfully connected to device:', deviceConnection.id)
+  // This function retrieves the SSID list from the device
+  // This function retrieves the SSID list from the device
+  const getSSIDList = async (device: Device, serviceUUID: string, characteristicUUID: string) => {
+    try {
+      console.log(`Attempting to read SSID List from device: ${device.id}`)
 
-  //     await deviceConnection.discoverAllServicesAndCharacteristics()
-  //     console.log('Discovered all services and characteristics')
+      // Step 1: Read the characteristic from the device
+      const characteristic = await device.readCharacteristicForService(serviceUUID, characteristicUUID)
+      console.log(`Characteristic value for SSID List: ${characteristic.value}`) // Log the raw value received
 
-  //     const services = await deviceConnection.services()
-  //     for (const service of services) {
-  //       const characteristics = await deviceConnection.characteristicsForService(service.uuid)
-  //       characteristics.forEach((characteristic) => {
-  //         console.log(`Characteristic UUID: ${characteristic.uuid}`)
-  //       })
-  //     }
+      // Step 2: Decode the Base64 value into a regular string
+      const decodedBase64Value = base64.decode(characteristic.value)
+      console.log('Decoded Base64 value:', decodedBase64Value)
 
-  //     sendWiFiCredentials(deviceConnection)
-  //     bleManager.stopDeviceScan()
+      // Step 3: Convert the decoded string into an ArrayBuffer (optional, for further processing)
+      const buffer = stringToArrayBuffer(decodedBase64Value)
+      console.log('Converted ArrayBuffer from decoded string:', buffer)
 
-  //     router.push('/home/addscreen')
-  //   } catch (e) {
-  //     console.error('Failed to connect to device:', e)
-  //   }
-  // }
+      // Step 4: Decode the ArrayBuffer into a string
+      const decodedWithAB2Str = ab2str(buffer)
+      console.log('Decoded ArrayBuffer to string:', decodedWithAB2Str)
 
-  // const sendWiFiCredentials = async (deviceConnection: Device) => {
-  //   try {
-  //     const serviceUUID = 'aabbccdd-1234-5678-9101-112233445566'
-  //     const ssidCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445568'
-  //     const notificationCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445569'
+      // Step 5: Extract SSID list from the decoded string
+      // Use a more robust regular expression to correctly split the SSIDs
+      const ssidList = decodedWithAB2Str.match(/"([^"]+)"/g).map((ssid) => ssid.replace(/["\[\]]/g, '').trim())
+      console.log('Extracted SSID List from decoded string:', ssidList)
 
-  //     const ssid = 'CGA2121_QV5rJnx'
-  //     const password = 'YhgqgkqGKsdR5PR83G'
+      // Step 6: Clean the SSID list (optional, to remove invalid or unwanted entries)
+      const cleanedSSIDs = ssidList.filter((ssid) => ssid && ssid.length > 4 && !ssid.includes('2.['))
+      console.log('Cleaned SSID List (filtered invalid entries):', cleanedSSIDs)
 
-  //     const credentials = JSON.stringify({ ssid, password })
-  //     const encodedCredentials = base64.encode(credentials)
+      // Step 7: Eliminate duplicates by converting to a Set and back to an Array
+      const uniqueSSIDs = Array.from(new Set(cleanedSSIDs))
+      console.log('Unique SSID List (duplicates removed):', uniqueSSIDs)
 
-  //     console.log('Encoded Wi-Fi Credentials:', encodedCredentials)
+      // Step 8: Optionally, save the SSID list to AsyncStorage for persistence
+      await AsyncStorage.setItem('filteredSSIDs', JSON.stringify(uniqueSSIDs))
+      console.log('SSID list saved to AsyncStorage:', uniqueSSIDs)
 
-  //     await deviceConnection.monitorCharacteristicForService(
-  //       serviceUUID,
-  //       notificationCharacteristicUUID,
-  //       (error, characteristic) => {
-  //         if (error) {
-  //           console.warn('Error enabling notifications:', error)
-  //         } else {
-  //           const msg = base64.decode(characteristic?.value || '')
-  //           console.log('Notification received:', msg)
-  //         }
-  //       }
-  //     )
+      return uniqueSSIDs
+    } catch (error) {
+      // Catch and log any errors during the process
+      console.error('Error retrieving SSID list from device:', error)
+      return []
+    }
+  }
 
-  //     await deviceConnection.writeCharacteristicWithResponseForService(
-  //       serviceUUID,
-  //       ssidCharacteristicUUID,
-  //       encodedCredentials
-  //     )
-  //     console.log('Wi-Fi credentials submitted successfully.')
-  //   } catch (error) {
-  //     console.error('Error sending Wi-Fi credentials:', error)
-  //   }
-  // }
+  // Helper function to convert string to ArrayBuffer
+  const stringToArrayBuffer = (str: string): ArrayBuffer => {
+    console.log('Converting string to ArrayBuffer:', str)
+    const encoder = new TextEncoder()
+    const arrayBuffer = encoder.encode(str).buffer
+    console.log('Converted ArrayBuffer:', arrayBuffer)
+    return arrayBuffer
+  }
+
+  // Helper function to convert ArrayBuffer to string
+  const ab2str = (buffer: ArrayBuffer): string => {
+    const uint8Array = new Uint8Array(buffer)
+    const decodedStr = String.fromCharCode(...uint8Array)
+    console.log('Converted ArrayBuffer to string:', decodedStr)
+    return decodedStr
+  }
+  const connectToDevice = async (device: Device) => {
+    try {
+      console.log(`Connecting to device: ${device.id}`)
+      const deviceConnection = await bleManager.connectToDevice(device.id)
+      setConnectedDevice(deviceConnection)
+      console.log('Successfully connected to device:', deviceConnection.id)
+
+      await deviceConnection.discoverAllServicesAndCharacteristics()
+      console.log('Discovered all services and characteristics')
+
+      // Fetch SSID list
+      const ssids = await getSSIDList(deviceConnection, serviceUUID, ssidListCharacteristicUUID)
+      setSsidList(ssids) // Set SSID list in state
+
+      // Save SSID list to AsyncStorage
+      await AsyncStorage.setItem('filteredSSIDs', JSON.stringify(ssidList))
+      console.log('SSID list saved to AsyncStorage')
+
+      setScreenText('Select a Screen')
+
+      // Stop scanning after connection
+      bleManager.stopDeviceScan()
+      console.log(ssidList, 'list')
+      await AsyncStorage.setItem('myssids', JSON.stringify(ssidList))
+      router.push('/home/addscreen')
+    } catch (e) {
+      console.error('Failed to connect to device:', e)
+    }
+  }
 
   const renderDevice = ({ item }: { item: Device }) => (
     <Pressable
-      // onPress={() => connectToDevice(item)}
-      onPress={() => router.push('/home/addscreen')}
+      onPress={() => connectToDevice(item)}
       style={({ pressed }) => [styles.deviceItem, pressed && { opacity: 0.7 }]}
     >
       <View>
@@ -208,6 +248,18 @@ export default function Index() {
       ) : (
         <NoScreensFound button={false} />
       )}
+
+      {ssidList.length > 0 && (
+        <View style={styles.ssidContainer}>
+          <CustomText style={{ fontSize: 20 }}>Available SSIDs:</CustomText>
+          <FlatList
+            data={ssidList}
+            keyExtractor={(item, index) => `${item}-${index}`}
+            renderItem={({ item }) => <CustomText>{item}</CustomText>}
+            style={styles.ssidList}
+          />
+        </View>
+      )}
     </AuthenticationWrapper>
   )
 }
@@ -233,5 +285,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0'
+  },
+  ssidContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20
+  },
+  ssidList: {
+    marginTop: 10
   }
 })

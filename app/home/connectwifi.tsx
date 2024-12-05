@@ -2,6 +2,7 @@ import { WifiIcon } from '@/assets/icons/WifiIcon'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from '@react-native-community/netinfo'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
@@ -18,7 +19,7 @@ export default function ConnectToWifi() {
   const [currentConnection, setCurrentConnection] = useState(null)
   const [availableConnections, setAvailableConnections] = useState([])
   const [selectedNetwork, setSelectedNetwork] = useState(null)
-  const [password, setPassword] = useState('YhgqgkqGKsdR5PR83G')
+  const [password, setPassword] = useState('')
   const [modalVisible, setModalVisible] = useState(false)
   const [connectedDevice, setConnectedDevice] = useState(null)
 
@@ -56,16 +57,35 @@ export default function ConnectToWifi() {
   }, [])
 
   useEffect(() => {
-    const scanWifiNetworks = async () => {
+    const fetchSavedNetworks = async () => {
       try {
-        const wifiList = await WifiManager.loadWifiList()
-        setAvailableConnections(wifiList)
+        const savedSSIDs = await AsyncStorage.getItem('filteredSSIDs')
+        console.log('saved ssids to choose from connect wifi screen:', savedSSIDs)
+
+        if (savedSSIDs) {
+          const ssidList = JSON.parse(savedSSIDs)
+          console.log('Parsed saved SSIDs:', ssidList)
+
+          // Fetch available networks
+          const wifiList = await WifiManager.loadWifiList()
+
+          // Filter available networks based on saved SSIDs
+          const availableWifiConnections = wifiList.filter((network) => ssidList.some((ssid) => ssid === network.SSID))
+          setAvailableConnections(availableWifiConnections)
+
+          // Set current connection as 'My Network' if it's saved in the list
+          if (ssidList.includes(currentConnection)) {
+            setSelectedNetwork({ SSID: currentConnection })
+          }
+        } else {
+          console.log('No saved SSIDs found.')
+        }
       } catch (error) {
-        console.error('Error scanning Wi-Fi networks:', error)
+        console.error('Error fetching saved SSIDs from AsyncStorage:', error)
       }
     }
-    scanWifiNetworks()
-  }, [])
+    fetchSavedNetworks()
+  }, []) // Add currentConnection to the dependency array to refetch when it changes
 
   const connectToDevice = async (device) => {
     try {
@@ -95,6 +115,8 @@ export default function ConnectToWifi() {
       const ssid = selectedNetwork?.SSID
       const credentials = JSON.stringify({ ssid, password })
       const encodedCredentials = base64.encode(credentials)
+
+      console.log(currentConnection)
 
       console.log('Encoded Wi-Fi Credentials:', encodedCredentials)
 
@@ -140,9 +162,8 @@ export default function ConnectToWifi() {
     }
   }
 
-  const filteredConnections = availableConnections.filter(
-    (network) => network?.SSID !== currentConnection && currentConnection !== 'No Wi-Fi connection'
-  )
+  // Filter other networks excluding the current one
+  const filteredConnections = availableConnections.filter((network) => network?.SSID !== selectedNetwork?.SSID)
 
   return (
     <AuthenticationWrapper screenName="Pairing your screen" buttonData={buttonData}>
@@ -154,8 +175,8 @@ export default function ConnectToWifi() {
 
           <TouchableOpacity
             onPress={() => {
-              if (currentConnection !== 'No Wi-Fi connection') {
-                setSelectedNetwork({ SSID: currentConnection })
+              if (selectedNetwork?.SSID) {
+                setSelectedNetwork({ SSID: selectedNetwork.SSID }) // If there's a current connection, allow selection
               }
             }}
             style={[
@@ -171,7 +192,7 @@ export default function ConnectToWifi() {
                 marginLeft: 5
               }}
             >
-              {currentConnection || 'No Wi-Fi connection'}
+              {selectedNetwork?.SSID || 'No Wi-Fi connection'}
             </CustomText>
           </TouchableOpacity>
         </View>
@@ -255,28 +276,25 @@ export default function ConnectToWifi() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.colors.white
+    padding: 16
   },
-  textContainer: {},
   screenTitle: {
-    fontSize: 30,
-    marginBottom: 8,
-    textAlign: 'center'
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20
   },
-  connections: {
-    flex: 1
+  textContainer: {
+    marginBottom: 20
   },
   networkView: {
-    width: '100%',
-    borderRadius: 8,
     borderWidth: 1,
-    backgroundColor: '#FFF',
-    height: 50,
+    padding: 12,
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 12
+    borderRadius: 8
+  },
+  connections: {
+    maxHeight: 250
   },
   modalOverlay: {
     flex: 1,
@@ -285,41 +303,41 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)'
   },
   modalContent: {
-    width: '80%',
+    backgroundColor: 'white',
     padding: 20,
-    backgroundColor: '#FFF',
-    borderRadius: 10
+    borderRadius: 8,
+    width: '80%'
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 10
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 10
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 20,
+    fontSize: 16
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between'
   },
   modalButton: {
-    flex: 1,
     paddingVertical: 12,
-    borderRadius: 8,
-    marginHorizontal: 5
+    paddingHorizontal: 30,
+    borderRadius: 4
   },
   confirmButton: {
     backgroundColor: palette.colors.purple.light
   },
   abortButton: {
-    backgroundColor: '#ccc'
+    backgroundColor: '#DDD'
   },
   buttonText: {
-    textAlign: 'center',
-    color: '#FFF'
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center'
   }
 })

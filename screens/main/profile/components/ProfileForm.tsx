@@ -1,4 +1,3 @@
-import React from 'react'
 import { useFormState } from 'react-hook-form'
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
 
@@ -26,7 +25,7 @@ export const ProfileForm = ({ control, errors, trigger, getValues }: ProfileForm
 
   const handleProfileVisit = async () => {
     const data = getValues()
-    const email = 'test@test.com'
+    const email = 'zajas.piotr@gmail.com'
 
     try {
       await updateTenantData(email, data)
@@ -100,7 +99,6 @@ export const ProfileForm = ({ control, errors, trigger, getValues }: ProfileForm
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
     backgroundColor: palette.colors.white
   },
   text: {

@@ -43,12 +43,12 @@ const styles = StyleSheet.create({
   },
   filled: {
     borderWidth: 0,
-    backgroundColor: palette.colors.purple.light
+    backgroundColor: palette.colors.purple.medium
   },
   outlined: {
     borderWidth: 2,
     backgroundColor: palette.colors.white,
-    borderColor: palette.colors.purple.light
+    borderColor: palette.colors.purple.medium
   },
   disabledButton: {
     backgroundColor: palette.colors.grey.medium,
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     color: palette.colors.white
   },
   outlinedText: {
-    color: palette.colors.purple.light
+    color: palette.colors.purple.medium
   },
   disabledText: {
     color: palette.colors.black

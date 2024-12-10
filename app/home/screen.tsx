@@ -1,32 +1,51 @@
 import { GreenDotIcon } from '@/assets/icons/GreenDotIcon'
-import { RefreshIcon } from '@/assets/icons/RefreshIcon'
 import { WifiIcon } from '@/assets/icons/WifiIcon'
+import { TvImage } from '@/assets/images/tvImage'
+import { PrimaryButton } from '@/components/buttons/PrimaryButton'
 import { NoScreensFound } from '@/components/NoScreensFound'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useRouter } from 'expo-router'
+import { typography } from '@/constants/typography'
+import { useBluetooth } from '@/hooks/useBluetooth'
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, PermissionsAndroid, Platform, Pressable, StyleSheet, View } from 'react-native'
-import base64 from 'react-native-base64'
-import { BleManager, Device } from 'react-native-ble-plx'
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Modal,
+  PermissionsAndroid,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View
+} from 'react-native'
+import { Device } from 'react-native-ble-plx'
 
-// Create the BleManager instance
-const bleManager = new BleManager()
-
-const serviceUUID = 'aabbccdd-1234-5678-9101-112233445566'
-const ssidListCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445567'
+const { width: screenWidth } = Dimensions.get('window')
 
 export default function Index() {
-  const [devices, setDevices] = useState<Device[]>([])
-  const [scanning, setScanning] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [screenText, setScreenText] = useState('Searching...')
-  const [connectionState, setConnectionState] = useState<string>('Disconnected')
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null)
-  const [ssidList, setSsidList] = useState<string[]>([]) // Holds the SSID list from the device
-  const router = useRouter()
+  const [password, setPassword] = useState('YhgqgkqGKsdR5PR83G')
+  const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null)
+  const [modalVisible, setModalVisible] = useState<boolean>(false)
+
+  const {
+    devices,
+    scanning,
+    isRefreshing,
+    screenText,
+    startScan,
+    ssidList,
+    connectedDevice,
+    connectToDevice,
+    sendWiFiCredentials,
+    pairDevice,
+    getPin,
+    currentScreen,
+    setCurrentScreen,
+    pin
+  } = useBluetooth()
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -59,147 +78,11 @@ export default function Index() {
     }
   }
 
-  const startScan = async () => {
-    setScanning(true)
-    setDevices([])
-    setIsRefreshing(true)
-    setScreenText('Searching...')
-
-    const connectedDevices = await bleManager.connectedDevices([serviceUUID])
-    if (connectedDevices.length > 0) {
-      console.log('Connected devices:', connectedDevices)
-      setDevices(connectedDevices)
-    } else {
-      console.log('No devices connected.')
+  const handlePasswordSubmit = async () => {
+    if (connectedDevice) {
+      await sendWiFiCredentials(connectedDevice, password)
     }
-
-    bleManager.startDeviceScan([serviceUUID], null, (error, device) => {
-      if (error) {
-        console.log('Error scanning:', error)
-        setScanning(false)
-        setIsRefreshing(false)
-        setScreenText('Error occurred during scanning.')
-        return
-      }
-
-      if (device?.serviceUUIDs?.includes(serviceUUID)) {
-        console.log('Discovered device:', device.name, device.id)
-        setDevices((prevDevices) => {
-          if (!prevDevices.find((dev) => dev.id === device.id)) {
-            console.log('Adding new device to the list')
-            return [...prevDevices, device]
-          }
-          return prevDevices
-        })
-      }
-    })
-
-    setTimeout(() => {
-      bleManager.stopDeviceScan()
-      setScanning(false)
-      setIsRefreshing(false)
-
-      if (devices.length === 0) {
-        setScreenText('No Screens Found')
-        console.log('No screens found.')
-      } else {
-        setScreenText('Select Screen')
-        console.log('Devices found:', devices)
-      }
-    }, 5000)
-  }
-
-  // This function retrieves the SSID list from the device
-  // This function retrieves the SSID list from the device
-  const getSSIDList = async (device: Device, serviceUUID: string, characteristicUUID: string) => {
-    try {
-      console.log(`Attempting to read SSID List from device: ${device.id}`)
-
-      // Step 1: Read the characteristic from the device
-      const characteristic = await device.readCharacteristicForService(serviceUUID, characteristicUUID)
-      console.log(`Characteristic value for SSID List: ${characteristic.value}`) // Log the raw value received
-
-      // Step 2: Decode the Base64 value into a regular string
-      const decodedBase64Value = base64.decode(characteristic.value)
-      console.log('Decoded Base64 value:', decodedBase64Value)
-
-      // Step 3: Convert the decoded string into an ArrayBuffer (optional, for further processing)
-      const buffer = stringToArrayBuffer(decodedBase64Value)
-      console.log('Converted ArrayBuffer from decoded string:', buffer)
-
-      // Step 4: Decode the ArrayBuffer into a string
-      const decodedWithAB2Str = ab2str(buffer)
-      console.log('Decoded ArrayBuffer to string:', decodedWithAB2Str)
-
-      // Step 5: Extract SSID list from the decoded string
-      // Use a more robust regular expression to correctly split the SSIDs
-      const ssidList = decodedWithAB2Str.match(/"([^"]+)"/g).map((ssid) => ssid.replace(/["\[\]]/g, '').trim())
-      console.log('Extracted SSID List from decoded string:', ssidList)
-
-      // Step 6: Clean the SSID list (optional, to remove invalid or unwanted entries)
-      const cleanedSSIDs = ssidList.filter((ssid) => ssid && ssid.length > 4 && !ssid.includes('2.['))
-      console.log('Cleaned SSID List (filtered invalid entries):', cleanedSSIDs)
-
-      // Step 7: Eliminate duplicates by converting to a Set and back to an Array
-      const uniqueSSIDs = Array.from(new Set(cleanedSSIDs))
-      console.log('Unique SSID List (duplicates removed):', uniqueSSIDs)
-
-      // Step 8: Optionally, save the SSID list to AsyncStorage for persistence
-      await AsyncStorage.setItem('filteredSSIDs', JSON.stringify(uniqueSSIDs))
-      console.log('SSID list saved to AsyncStorage:', uniqueSSIDs)
-
-      return uniqueSSIDs
-    } catch (error) {
-      // Catch and log any errors during the process
-      console.error('Error retrieving SSID list from device:', error)
-      return []
-    }
-  }
-
-  // Helper function to convert string to ArrayBuffer
-  const stringToArrayBuffer = (str: string): ArrayBuffer => {
-    console.log('Converting string to ArrayBuffer:', str)
-    const encoder = new TextEncoder()
-    const arrayBuffer = encoder.encode(str).buffer
-    console.log('Converted ArrayBuffer:', arrayBuffer)
-    return arrayBuffer
-  }
-
-  // Helper function to convert ArrayBuffer to string
-  const ab2str = (buffer: ArrayBuffer): string => {
-    const uint8Array = new Uint8Array(buffer)
-    const decodedStr = String.fromCharCode(...uint8Array)
-    console.log('Converted ArrayBuffer to string:', decodedStr)
-    return decodedStr
-  }
-  const connectToDevice = async (device: Device) => {
-    try {
-      console.log(`Connecting to device: ${device.id}`)
-      const deviceConnection = await bleManager.connectToDevice(device.id)
-      setConnectedDevice(deviceConnection)
-      console.log('Successfully connected to device:', deviceConnection.id)
-
-      await deviceConnection.discoverAllServicesAndCharacteristics()
-      console.log('Discovered all services and characteristics')
-
-      // Fetch SSID list
-      const ssids = await getSSIDList(deviceConnection, serviceUUID, ssidListCharacteristicUUID)
-      setSsidList(ssids) // Set SSID list in state
-
-      // Save SSID list to AsyncStorage
-      await AsyncStorage.setItem('filteredSSIDs', JSON.stringify(ssidList))
-      console.log('SSID list saved to AsyncStorage')
-
-      setScreenText('Select a Screen')
-
-      // Stop scanning after connection
-      bleManager.stopDeviceScan()
-      console.log(ssidList, 'list')
-      await AsyncStorage.setItem('myssids', JSON.stringify(ssidList))
-      router.push('/home/addscreen')
-    } catch (e) {
-      console.error('Failed to connect to device:', e)
-    }
+    setModalVisible(false)
   }
 
   const renderDevice = ({ item }: { item: Device }) => (
@@ -216,81 +99,362 @@ export default function Index() {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <WifiIcon />
+          <WifiIcon color={palette.colors.blue.medium} />
           <CustomText style={{ fontSize: 12, color: '#007AFF', marginLeft: 4 }}>Ready to pair</CustomText>
         </View>
       </View>
     </Pressable>
   )
 
-  const buttonData = [
-    {
-      text: 'Refresh',
-      onPress: startScan,
-      filled: false,
-      icon: <RefreshIcon />
+  const renderSSID = ({ item }: { item: string }) => (
+    <Pressable
+      onPress={() => {
+        setSelectedNetwork(item)
+        setModalVisible(true)
+      }}
+      style={({ pressed }) => [styles.ssidItem, pressed && { opacity: 0.7 }]}
+    >
+      <WifiIcon color={palette.colors.purple.medium} />
+      <CustomText style={{ color: palette.colors.purple.medium, marginLeft: 8 }}>{item}</CustomText>
+    </Pressable>
+  )
+
+  const fetchPinAndPairDevice = async () => {
+    console.log('fetchPinAndPairDevice called')
+
+    try {
+      // Step 1: Ensure the device is connected
+      if (!connectedDevice) {
+        throw new Error('No connected device found.')
+      }
+
+      console.log('Fetching PIN...')
+      await getPin(connectedDevice) // Fetch the PIN
+
+      // Step 2: Ensure the PIN is available
+      if (!pin) {
+        throw new Error('PIN is missing after fetch')
+      }
+
+      console.log('PIN fetched:', pin)
+
+      // Step 3: Proceed with pairing once the PIN is available
+      console.log('Pairing device...')
+      await pairDevice()
+    } catch (error) {
+      console.error('Error in fetchPinAndPairDevice:', error)
+    } finally {
+      console.log('fetchPinAndPairDevice execution complete')
     }
-  ]
+  }
+
+  const handleAccept = async () => {
+    await getPin(connectedDevice)
+
+    setCurrentScreen('connecting')
+  }
+
+  const buttonData =
+    currentScreen === ''
+      ? [{ text: typography.pairing.refresh, onPress: startScan, filled: false, disabled: false }]
+      : currentScreen === 'initial'
+        ? [
+            { text: 'Accept', onPress: handleAccept, filled: true, disabled: false },
+            { text: 'Decline pairing', onPress: () => console.log('Decline'), filled: false, disabled: false }
+          ]
+        : currentScreen === 'connecting'
+          ? [
+              {
+                text: 'Connect to this network',
+                onPress: () => setModalVisible(true),
+                filled: true,
+                disabled: false
+              },
+              {
+                text: 'Configure hotspot',
+                onPress: () => console.log('Hotspot'),
+                filled: false,
+                disabled: false
+              }
+            ]
+          : currentScreen === 'pairing'
+            ? [
+                {
+                  text: 'Complete!',
+                  onPress: pairDevice, // Wrap it in an anonymous function
+                  filled: true,
+                  disabled: false
+                }
+              ]
+            : []
 
   return (
-    <AuthenticationWrapper screenName="Add new screen" buttonData={buttonData}>
-      <View style={styles.centeredContainer}>
-        <CustomText style={{ fontSize: 30 }}>{screenText}</CustomText>
-        <CustomText style={{ fontSize: 18, marginTop: 10 }}>{`Connection Status: ${connectionState}`}</CustomText>
-      </View>
-
-      {isRefreshing ? (
-        <View style={styles.spinnerContainer}>
-          <ActivityIndicator size="large" color={palette.colors.purple.light} />
+    <>
+      <AuthenticationWrapper
+        screenName={currentScreen ? 'Pairing your screen' : 'Add new screen'}
+        buttonData={buttonData}
+        disabled={scanning}
+      >
+        <View style={styles.centeredContainer}>
+          <CustomText style={{ fontSize: 30 }}>{screenText}</CustomText>
         </View>
-      ) : devices.length > 0 ? (
-        <FlatList data={devices} keyExtractor={(item) => item.id} renderItem={renderDevice} style={styles.deviceList} />
-      ) : (
-        <NoScreensFound button={false} />
-      )}
 
-      {ssidList.length > 0 && (
-        <View style={styles.ssidContainer}>
-          <CustomText style={{ fontSize: 20 }}>Available SSIDs:</CustomText>
-          <FlatList
-            data={ssidList}
-            keyExtractor={(item, index) => `${item}-${index}`}
-            renderItem={({ item }) => <CustomText>{item}</CustomText>}
-            style={styles.ssidList}
+        {/* <View style={styles.actions}>
+          <Button title="Refresh" onPress={startScan} disabled={scanning} />
+          <Button
+            title="Fetch PIN"
+            onPress={() => connectedDevice && getPin(connectedDevice)}
+            disabled={!connectedDevice}
           />
-        </View>
-      )}
-    </AuthenticationWrapper>
+          <Button title="Pair Device" onPress={pairDevice} disabled={!connectedDevice} />
+        </View> */}
+
+        {!currentScreen && (
+          <>
+            {isRefreshing ? (
+              <View style={styles.spinnerContainer}>
+                <ActivityIndicator size="large" color={palette.colors.purple.light} />
+              </View>
+            ) : devices.length > 0 ? (
+              <FlatList
+                data={devices}
+                keyExtractor={(item) => item.id}
+                renderItem={renderDevice}
+                style={styles.deviceList}
+              />
+            ) : (
+              <NoScreensFound button={false} />
+            )}
+          </>
+        )}
+
+        {currentScreen === 'initial' && (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <CustomText
+              style={{ fontSize: 30, lineHeight: 31, letterSpacing: -1, textAlign: 'center', marginBottom: 12 }}
+            >
+              {connectedDevice?.id}
+            </CustomText>
+            <CustomText style={{ textAlign: 'center', marginBottom: 40, color: palette.colors.purple.medium }}>
+              Ready to pair
+            </CustomText>
+
+            <TvImage />
+          </View>
+        )}
+
+        {currentScreen === 'connecting' && (
+          <View style={{ marginTop: 32 }}>
+            <CustomText>My network</CustomText>
+            {ssidList.length > 0 && (
+              <FlatList data={ssidList} keyExtractor={(item) => item} renderItem={renderSSID} style={styles.ssidList} />
+            )}
+          </View>
+        )}
+
+        {currentScreen === 'pairing' && (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <View style={{ height: 175, width: '100%', backgroundColor: '#7B838A', borderRadius: 8 }} />
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 24 }}>
+              <GreenDotIcon />
+              <CustomText style={{ fontSize: 20, marginLeft: 10 }}>
+                {connectedDevice?.name} {connectedDevice?.id}
+              </CustomText>
+            </View>
+
+            <View>
+              <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Screen Name</CustomText>
+              <CustomText
+                style={{
+                  padding: 12,
+                  borderWidth: 2,
+                  borderColor: '#EEF0F2',
+                  borderRadius: 12,
+                  color: '#495057',
+                  fontSize: 15,
+                  marginBottom: 12
+                }}
+              >
+                {connectedDevice?.name} {connectedDevice?.id}
+              </CustomText>
+
+              <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Change orientation</CustomText>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    borderWidth: 2,
+                    width: '22%',
+                    paddingVertical: 16,
+                    justifyContent: 'center',
+                    borderRadius: 12,
+                    borderColor: '#EEF0F2'
+                  }}
+                >
+                  <WifiIcon color={'grey'} />
+                  <CustomText
+                    style={{
+                      color: '#495057',
+                      fontSize: 15,
+                      textAlign: 'center'
+                    }}
+                  >
+                    0
+                  </CustomText>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    borderWidth: 2,
+                    width: '22%',
+                    paddingVertical: 16,
+                    justifyContent: 'center',
+                    borderRadius: 12,
+                    borderColor: '#EEF0F2'
+                  }}
+                >
+                  <WifiIcon color={'grey'} />
+                  <CustomText
+                    style={{
+                      color: '#495057',
+                      fontSize: 15,
+                      textAlign: 'center'
+                    }}
+                  >
+                    90
+                  </CustomText>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    borderWidth: 2,
+                    width: '22%',
+                    paddingVertical: 16,
+                    justifyContent: 'center',
+                    borderRadius: 12,
+                    borderColor: '#EEF0F2'
+                  }}
+                >
+                  <WifiIcon color={'grey'} />
+                  <CustomText
+                    style={{
+                      color: '#495057',
+                      fontSize: 15,
+                      textAlign: 'center'
+                    }}
+                  >
+                    180
+                  </CustomText>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    borderWidth: 2,
+                    width: '22%',
+                    paddingVertical: 16,
+                    justifyContent: 'center',
+                    borderRadius: 12,
+                    borderColor: '#EEF0F2'
+                  }}
+                >
+                  <WifiIcon color={'grey'} />
+                  <CustomText
+                    style={{
+                      color: '#495057',
+                      fontSize: 15,
+                      textAlign: 'center'
+                    }}
+                  >
+                    270
+                  </CustomText>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <Modal visible={modalVisible} transparent={true}>
+          <Pressable style={styles.modalBackground} onPress={() => setModalVisible(false)}>
+            <View style={styles.modalContainer}>
+              <CustomText style={{ fontSize: 30, textAlign: 'center', marginBottom: 24 }}>
+                Enter password for <CustomText>{connectedDevice?.id}</CustomText>
+              </CustomText>
+              <CustomText style={{ fontSize: 15, lineHeight: 20 }}>Wifi password</CustomText>
+              <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} />
+
+              <PrimaryButton text="Confirm" onPress={handlePasswordSubmit} filled={true} />
+              <PrimaryButton text="Go back" onPress={() => setModalVisible(false)} filled={false} />
+              {/* <Button title="Submit" onPress={handlePasswordSubmit} /> */}
+            </View>
+          </Pressable>
+        </Modal>
+      </AuthenticationWrapper>
+    </>
   )
 }
 
 const styles = StyleSheet.create({
   centeredContainer: {
-    alignItems: 'center',
-    padding: 20
-  },
-  spinnerContainer: {
-    marginTop: 50,
+    justifyContent: 'center',
     alignItems: 'center'
   },
   deviceList: {
-    marginTop: 20,
-    width: '100%',
-    marginBottom: 20
-  },
-  deviceItem: {
-    backgroundColor: '#F4F4F5',
-    marginVertical: 10,
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  ssidContainer: {
-    marginTop: 20,
-    paddingHorizontal: 20
+    marginTop: 20
   },
   ssidList: {
-    marginTop: 10
+    marginTop: 12
+  },
+  spinnerContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 200
+  },
+  actions: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  ssidItem: {
+    padding: 16,
+    borderWidth: 2,
+    borderColor: palette.colors.purple.medium,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  deviceItem: {
+    padding: 10,
+    backgroundColor: palette.colors.purple.light,
+    height: 74,
+    borderRadius: 8
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+  },
+  modalContainer: {
+    width: screenWidth - 40,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 20
+  },
+  input: {
+    borderColor: palette.colors.purple.light,
+    borderRadius: 12,
+    borderWidth: 2,
+    padding: 20,
+    marginTop: 10,
+    marginBottom: 24
   }
 })

@@ -33,7 +33,7 @@ export const LoginForm = ({ control, errors, trigger }: LoginFormProps) => {
               onChange(text)
               trigger('email')
             }}
-            value={'test@test.com'}
+            value={'zajas.piotr@gmail.com'}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -67,8 +67,7 @@ export const LoginForm = ({ control, errors, trigger }: LoginFormProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-    paddingHorizontal: 20
+    width: '100%'
   },
   label: {
     fontSize: 15,

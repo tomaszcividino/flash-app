@@ -1,126 +1,35 @@
-import { WifiIcon } from '@/assets/icons/WifiIcon'
 import { CustomText } from '@/components/typography/CustomText'
-import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
-import { palette } from '@/constants/palette'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import NetInfo from '@react-native-community/netinfo'
-import { useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
-import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import React, { useState } from 'react'
+import { Button, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native'
 import base64 from 'react-native-base64'
-import { BleManager } from 'react-native-ble-plx'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import WifiManager from 'react-native-wifi-reborn'
-
-const bleManager = new BleManager()
+import { Device } from 'react-native-ble-plx'
 
 export default function ConnectToWifi() {
-  const router = useRouter()
-  const [currentConnection, setCurrentConnection] = useState(null)
-  const [availableConnections, setAvailableConnections] = useState([])
-  const [selectedNetwork, setSelectedNetwork] = useState(null)
-  const [password, setPassword] = useState('')
-  const [modalVisible, setModalVisible] = useState(false)
-  const [connectedDevice, setConnectedDevice] = useState(null)
+  const [password, setPassword] = useState('YhgqgkqGKsdR5PR83G')
+  const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null)
+  const [modalVisible, setModalVisible] = useState<boolean>(false)
+  const [loading, setLoading] = useState(false)
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null)
 
-  const buttonData = [
-    {
-      text: 'Connect to this network',
-      onPress: async () => {
-        if (!selectedNetwork) {
-          console.error('No network selected.')
-          return
-        }
-        setModalVisible(true) // Show password modal
-      },
-      filled: true,
-      disabled: false
-    },
-    {
-      text: 'Configure hotspot',
-      onPress: () => console.log('configure hotspot'),
-      filled: false,
-      disabled: false
+  console.log(connectedDevice, 'connected from addScreen')
+
+  const sendWiFiCredentials = async () => {
+    if (!connectedDevice) {
+      console.warn('No connected device found')
+      return
     }
-  ]
 
-  useEffect(() => {
-    const fetchCurrentConnection = async () => {
-      const state = await NetInfo.fetch()
-      if (state.type === 'wifi' && state.isConnected) {
-        setCurrentConnection(state.details.ssid || 'Unknown SSID')
-      } else {
-        setCurrentConnection('No Wi-Fi connection')
-      }
-    }
-    fetchCurrentConnection()
-  }, [])
+    const serviceUUID = 'aabbccdd-1234-5678-9101-112233445566'
+    const ssidCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445568'
+    const notificationCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445569'
 
-  useEffect(() => {
-    const fetchSavedNetworks = async () => {
-      try {
-        const savedSSIDs = await AsyncStorage.getItem('filteredSSIDs')
-        console.log('saved ssids to choose from connect wifi screen:', savedSSIDs)
+    const ssid = selectedNetwork || 'CGA2121_QV5rJnx'
+    const credentials = JSON.stringify({ ssid, password })
+    const encodedCredentials = base64.encode(credentials)
 
-        if (savedSSIDs) {
-          const ssidList = JSON.parse(savedSSIDs)
-          console.log('Parsed saved SSIDs:', ssidList)
-
-          // Fetch available networks
-          const wifiList = await WifiManager.loadWifiList()
-
-          // Filter available networks based on saved SSIDs
-          const availableWifiConnections = wifiList.filter((network) => ssidList.some((ssid) => ssid === network.SSID))
-          setAvailableConnections(availableWifiConnections)
-
-          // Set current connection as 'My Network' if it's saved in the list
-          if (ssidList.includes(currentConnection)) {
-            setSelectedNetwork({ SSID: currentConnection })
-          }
-        } else {
-          console.log('No saved SSIDs found.')
-        }
-      } catch (error) {
-        console.error('Error fetching saved SSIDs from AsyncStorage:', error)
-      }
-    }
-    fetchSavedNetworks()
-  }, []) // Add currentConnection to the dependency array to refetch when it changes
-
-  const connectToDevice = async (device) => {
     try {
-      console.log(`Connecting to device: ${device.id}`)
-      const deviceConnection = await bleManager.connectToDevice(device.id)
-      setConnectedDevice(deviceConnection)
-      console.log('Successfully connected to device:', deviceConnection.id)
-
-      await deviceConnection.discoverAllServicesAndCharacteristics()
-      console.log('Discovered all services and characteristics')
-
-      sendWiFiCredentials(deviceConnection)
-      router.push('/home/addscreen') // Navigate after successful connection
-    } catch (e) {
-      console.error('Failed to connect to device:', e)
-    }
-  }
-
-  const sendWiFiCredentials = async (deviceConnection) => {
-    try {
-      const serviceUUID = 'aabbccdd-1234-5678-9101-112233445566'
-      const ssidCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445568'
-      const notificationCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445569'
-
-      console.log(selectedNetwork)
-
-      const ssid = selectedNetwork?.SSID
-      const credentials = JSON.stringify({ ssid, password })
-      const encodedCredentials = base64.encode(credentials)
-
-      console.log(currentConnection)
-
-      console.log('Encoded Wi-Fi Credentials:', encodedCredentials)
-
-      await deviceConnection.monitorCharacteristicForService(
+      // Enable notifications for receiving response from the device
+      await connectedDevice.monitorCharacteristicForService(
         serviceUUID,
         notificationCharacteristicUUID,
         (error, characteristic) => {
@@ -129,11 +38,15 @@ export default function ConnectToWifi() {
           } else {
             const msg = base64.decode(characteristic?.value || '')
             console.log('Notification received:', msg)
+            if (msg.includes('Connected to')) {
+              console.log('Device connected with message:', msg)
+            }
           }
         }
       )
 
-      await deviceConnection.writeCharacteristicWithResponseForService(
+      // Write the Wi-Fi credentials to the device
+      await connectedDevice.writeCharacteristicWithResponseForService(
         serviceUUID,
         ssidCharacteristicUUID,
         encodedCredentials
@@ -144,200 +57,66 @@ export default function ConnectToWifi() {
     }
   }
 
-  const connectToSelectedNetwork = async () => {
-    if (!selectedNetwork || !password) {
-      console.error('Network or password missing')
-      return
-    }
-
-    try {
-      setModalVisible(false)
-      setPassword('')
-
-      // Mock BLE Device Selection (replace with actual BLE scan and selection logic)
-      const device = { id: 'D8:3A:DD:CB:B4:FE' } // Replace with the real device ID
-      await connectToDevice(device)
-    } catch (error) {
-      console.error('Error connecting to Wi-Fi:', error)
-    }
+  const handleSubmit = async () => {
+    setLoading(true)
+    await sendWiFiCredentials()
+    setLoading(false)
   }
 
-  // Filter other networks excluding the current one
-  const filteredConnections = availableConnections.filter((network) => network?.SSID !== selectedNetwork?.SSID)
-
   return (
-    <AuthenticationWrapper screenName="Pairing your screen" buttonData={buttonData}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.textContainer}>
-          <CustomText style={styles.screenTitle}>Connect to WiFi</CustomText>
+    <View style={styles.container}>
+      <CustomText style={{ fontSize: 30 }}>Enter Wi-Fi Credentials</CustomText>
 
-          <CustomText style={{ textAlign: 'left', marginBottom: 12 }}>My network</CustomText>
+      <Pressable style={styles.ssidItem} onPress={() => setModalVisible(true)}>
+        <CustomText>{selectedNetwork || 'Select Wi-Fi'}</CustomText>
+      </Pressable>
 
-          <TouchableOpacity
-            onPress={() => {
-              if (selectedNetwork?.SSID) {
-                setSelectedNetwork({ SSID: selectedNetwork.SSID }) // If there's a current connection, allow selection
-              }
-            }}
-            style={[
-              styles.networkView,
-              { borderColor: selectedNetwork?.SSID === currentConnection ? palette.colors.purple.light : '#EEF0F2' }
-            ]}
-          >
-            <WifiIcon selected={selectedNetwork?.SSID === currentConnection} style={{ marginLeft: 5 }} />
-            <CustomText
-              style={{
-                textAlign: 'left',
-                color: selectedNetwork?.SSID === currentConnection ? palette.colors.purple.light : '#7B838A',
-                marginLeft: 5
-              }}
-            >
-              {selectedNetwork?.SSID || 'No Wi-Fi connection'}
-            </CustomText>
-          </TouchableOpacity>
-        </View>
-
-        <CustomText style={{ textAlign: 'left', marginTop: 32, marginBottom: 12 }}>Other networks</CustomText>
-
-        <View style={styles.connections}>
-          <FlatList
-            data={filteredConnections}
-            keyExtractor={(item) => item.BSSID}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  setSelectedNetwork(item)
-                }}
-                style={[
-                  styles.networkView,
-                  {
-                    marginBottom: 12,
-                    borderColor: selectedNetwork?.BSSID === item.BSSID ? palette.colors.purple.light : '#EEF0F2'
-                  }
-                ]}
-              >
-                <WifiIcon
-                  selected={selectedNetwork?.BSSID === item.BSSID}
-                  style={{ color: selectedNetwork?.BSSID === item.BSSID ? palette.colors.purple.light : '#7B838A' }}
-                />
-                <CustomText
-                  style={{
-                    textAlign: 'left',
-                    color: selectedNetwork?.BSSID === item.BSSID ? palette.colors.purple.light : '#7B838A',
-                    marginLeft: 5
-                  }}
-                >
-                  {item.SSID || 'Unnamed Network'}
-                </CustomText>
-              </TouchableOpacity>
-            )}
-            style={{ maxHeight: 250 }}
-          />
-        </View>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Connect to {selectedNetwork?.SSID || 'Selected Network'}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter Wi-Fi password"
-                secureTextEntry={true}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={connectToSelectedNetwork}>
-                  <Text style={styles.buttonText}>Confirm</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.abortButton]}
-                  onPress={() => {
-                    setModalVisible(false)
-                    setPassword('')
-                  }}
-                >
-                  <Text style={styles.buttonText}>Abort</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+      <Modal visible={modalVisible} transparent={true}>
+        <Pressable style={styles.modalBackground} onPress={() => setModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <CustomText style={{ fontSize: 18 }}>Enter Wi-Fi password</CustomText>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={true}
+            />
+            <Button title={loading ? 'Submitting...' : 'Submit'} onPress={handleSubmit} disabled={loading} />
           </View>
-        </Modal>
-      </SafeAreaView>
-    </AuthenticationWrapper>
+        </Pressable>
+      </Modal>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20
+  ssidItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'black'
   },
-  textContainer: {
-    marginBottom: 20
-  },
-  networkView: {
-    borderWidth: 1,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8
-  },
-  connections: {
-    maxHeight: 250
-  },
-  modalOverlay: {
+  modalBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)'
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
-  modalContent: {
+  modalContainer: {
+    width: 300,
     backgroundColor: 'white',
     padding: 20,
-    borderRadius: 8,
-    width: '80%'
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10
+    borderRadius: 10
   },
   input: {
+    borderColor: 'black',
     borderWidth: 1,
-    borderRadius: 4,
     padding: 10,
-    marginBottom: 20,
-    fontSize: 16
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between'
-  },
-  modalButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 4
-  },
-  confirmButton: {
-    backgroundColor: palette.colors.purple.light
-  },
-  abortButton: {
-    backgroundColor: '#DDD'
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    textAlign: 'center'
+    marginTop: 10
   }
 })

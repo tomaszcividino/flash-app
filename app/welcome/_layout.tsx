@@ -10,9 +10,11 @@ export default function Layout() {
       <Stack
         screenOptions={{
           headerRight: () => <InfoIcon />,
+          headerLeft: () => <></>,
           headerStyle: {
             backgroundColor: palette.colors.white
           },
+          headerShadowVisible: false,
           headerTintColor: palette.colors.black
         }}
       >

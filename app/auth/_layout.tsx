@@ -13,7 +13,9 @@ export default function Layout() {
           headerStyle: {
             backgroundColor: palette.colors.white
           },
-          headerTintColor: palette.colors.black
+          contentStyle: { backgroundColor: palette.colors.white },
+          headerTintColor: palette.colors.black,
+          headerShadowVisible: false
         }}
       >
         <Stack.Screen name="index" options={{ headerTitle: '' }} />

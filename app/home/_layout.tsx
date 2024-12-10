@@ -15,6 +15,7 @@ import AddScreen from './addscreen'
 import BillingScreen from './billing'
 import ConnetToWifi from './connectwifi'
 import HelpScreen from './help'
+import PairScreen from './pairscreen'
 import ProfileScreen from './profile'
 import SingleScreen from './screen'
 
@@ -52,6 +53,8 @@ export default function Layout() {
         <Drawer.Screen name="screen" component={SingleScreen} options={headerOptions} />
         <Drawer.Screen name="addscreen" component={AddScreen} options={headerOptions} />
         <Drawer.Screen name="connectwifi" component={ConnetToWifi} options={headerOptions} />
+        <Drawer.Screen name="pairscreen" component={PairScreen} options={headerOptions} />
+        <Drawer.Screen name="confirmation" component={PairScreen} options={headerOptions} />
       </Drawer.Navigator>
     </>
   )

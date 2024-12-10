@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router'
 
-import { urls } from '@/constants/typography'
 import { ApolloClient, ApolloLink, FetchResult, HttpLink, InMemoryCache, Observable, useMutation } from '@apollo/client'
 import { UPDATE_TENANT_MUTATION } from './mutations/tenantMutations'
 
+import { urls } from '@/constants/urls'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const createApolloClientForUpdating = () => {

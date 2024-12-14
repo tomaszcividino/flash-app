@@ -31,7 +31,7 @@ export const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20
+    marginHorizontal: -20
   },
   centeredContent: {
     alignItems: 'center'
@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 30,
     marginBottom: 32,
+    marginTop: 12,
     lineHeight: 31.5,
     letterSpacing: -1
   }

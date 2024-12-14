@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4
   },
   activeDot: {
-    backgroundColor: palette.colors.purple.light
+    backgroundColor: palette.colors.purple.medium
   },
   inactiveDot: {
     backgroundColor: palette.colors.grey.light

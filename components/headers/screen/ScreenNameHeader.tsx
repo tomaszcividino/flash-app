@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
   },
   text: {
     textAlign: 'center',
-    color: palette.colors.purple.light,
+    color: palette.colors.purple.medium,
     fontSize: 15
   }
 })

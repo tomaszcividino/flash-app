@@ -21,8 +21,8 @@ export const useLoginForm = () => {
   } = useForm<LoginFormData>({
     // resolver: zodResolver(LoginSchema),
     defaultValues: {
-      email: 'test@test.com',
-      password: 'test123'
+      email: 'zajas.piotr@gmail.com',
+      password: '123123'
     }
   })
 

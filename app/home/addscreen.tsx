@@ -1,165 +1,100 @@
-import { WifiIcon } from '@/assets/icons/WifiIcon'
-import { TvImage } from '@/assets/images/tvImage'
 import { CustomText } from '@/components/typography/CustomText'
-import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
-import { palette } from '@/constants/palette'
-import { useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
-import { SafeAreaView, StyleSheet, View } from 'react-native'
-import { BleManager, Device } from 'react-native-ble-plx' // Import BLE manager for BLE operations
+import { useBluetooth } from '@/hooks/useBluetooth'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import React, { useEffect, useState } from 'react'
+import { Button, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native'
+import { Device } from 'react-native-ble-plx'
 
-export default function AddScreen() {
-  const router = useRouter()
-  const [connectedDevices, setConnectedDevices] = useState<Device[]>([]) // State to store connected BLE devices
-  const [bleManager] = useState(new BleManager()) // Initialize BLE Manager
+export default function ConnectToWifi() {
+  const [password, setPassword] = useState('YhgqgkqGKsdR5PR83G')
+  const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null)
+  const [modalVisible, setModalVisible] = useState<boolean>(false)
+  const [loading, setLoading] = useState(false)
+
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null)
+
+  const { sendWiFiCredentials } = useBluetooth()
 
   useEffect(() => {
-    // Function to fetch connected BLE devices when the screen loads
-    const fetchConnectedBleDevices = async () => {
+    const getConnectedDevice = async () => {
       try {
-        const devices = await bleManager.connectedDevices([]) // Fetch connected devices
-        setConnectedDevices(devices) // Store the devices in the state
-        console.log('Connected BLE Devices:', devices) // Log the devices to the console
+        // Retrieve the connected device from AsyncStorage
+        const deviceData = await AsyncStorage.getItem('connectedDevice')
+        if (deviceData) {
+          const device = JSON.parse(deviceData)
+          setConnectedDevice(device) // Set the device in the state
+        } else {
+          console.warn('No connected device found in AsyncStorage')
+        }
       } catch (error) {
-        console.error('Error fetching connected BLE devices:', error)
+        console.error('Error retrieving device from AsyncStorage:', error)
       }
     }
 
-    // Fetch connected devices initially
-    fetchConnectedBleDevices()
-
-    // Listen for device connection state changes (optional for debugging)
-    bleManager.onStateChange((state) => {
-      console.log('BLE Manager State:', state)
-      if (state === 'PoweredOn') {
-        fetchConnectedBleDevices() // Retry fetching connected devices if Bluetooth is powered on
-      }
-    }, true)
-
-    // Clean up BLE manager when the component unmounts
-    return () => {
-      bleManager.destroy()
-    }
+    getConnectedDevice()
   }, [])
 
-  const handleLogout = async () => {
-    try {
-      // Handle logout functionality
-      router.replace('/auth')
-    } catch (error) {
-      console.error('Error during logout:', error)
+  const handlePasswordSubmit = async () => {
+    if (connectedDevice) {
+      await sendWiFiCredentials(connectedDevice, password)
     }
+    setModalVisible(false)
   }
 
-  const buttonData = [
-    {
-      text: 'Accept',
-      onPress: () => router.push('/home/connectwifi'),
-      filled: true,
-      disabled: false
-    },
-    {
-      text: 'Decline pairing',
-      onPress: () => console.log('decline pressed'),
-      filled: false,
-      disabled: false
-    }
-  ]
-
   return (
-    <AuthenticationWrapper screenName="Pairing your screen" buttonData={buttonData}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.textContainer}>
-          <CustomText style={styles.screenTitle}>Add this screen</CustomText>
-        </View>
+    <View style={styles.container}>
+      <CustomText style={{ fontSize: 30 }}>Enter Wi-Fi Credentials</CustomText>
 
-        <View style={styles.pairedScreenContainer}>
-          <View style={styles.pairedScreen}>
-            <CustomText weight="bold" style={{ fontSize: 30, textAlign: 'center', letterSpacing: -1 }}>
-              LG TV- PXLMFEFHJB33
-            </CustomText>
+      <Pressable style={styles.ssidItem} onPress={() => setModalVisible(true)}>
+        <CustomText>{selectedNetwork || 'Select Wi-Fi'}</CustomText>
+      </Pressable>
 
-            {/* Align PairingIcon and Ready to pair text vertically */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 40 }}>
-              <WifiIcon />
-              <CustomText
-                style={{
-                  fontSize: 12,
-                  textAlign: 'center',
-                  color: palette.colors.purple.light,
-                  marginLeft: 4, // Adjust spacing between icon and text
-                  lineHeight: 16 // Ensure the text height is aligned with the icon
-                }}
-              >
-                Ready to pair
-              </CustomText>
-            </View>
-
-            <TvImage />
+      <Modal visible={modalVisible} transparent={true}>
+        <Pressable style={styles.modalBackground} onPress={() => setModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <CustomText style={{ fontSize: 18 }}>Enter Wi-Fi password</CustomText>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={true}
+            />
+            <Button title={loading ? 'Submitting...' : 'Submit'} onPress={handlePasswordSubmit} disabled={loading} />
           </View>
-        </View>
-
-        {/* Display the list of connected devices */}
-        <View style={styles.connectedDevicesContainer}>
-          <CustomText style={styles.connectedDevicesTitle}>Connected Devices:</CustomText>
-          {connectedDevices.length > 0 ? (
-            <View>
-              {connectedDevices.map((device, index) => (
-                <CustomText key={index} style={styles.deviceText}>
-                  {device.name || 'Unnamed Device'} - {device.id}
-                </CustomText>
-              ))}
-            </View>
-          ) : (
-            <CustomText style={styles.deviceText}>No connected devices found.</CustomText>
-          )}
-        </View>
-      </SafeAreaView>
-    </AuthenticationWrapper>
+        </Pressable>
+      </Modal>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.colors.white
-  },
-  textContainer: {
-    marginTop: 16,
-    marginHorizontal: 20
-  },
-  screenTitle: {
-    fontSize: 30,
-    marginBottom: 8,
-    textAlign: 'center'
-  },
-  pairedScreenContainer: {
-    flex: 1,
-    justifyContent: 'center', // Centers vertically
-    alignItems: 'center' // Centers horizontally
-  },
-  pairedScreen: {
-    width: 350,
-    height: 323,
-    backgroundColor: '#F8F9FA',
-    marginTop: 32,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#EEF0F2',
     justifyContent: 'center',
     alignItems: 'center'
   },
-  connectedDevicesContainer: {
-    marginTop: 20,
-    paddingHorizontal: 20
+  ssidItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'black'
   },
-  connectedDevicesTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
-  deviceText: {
-    fontSize: 16,
-    marginBottom: 6
+  modalContainer: {
+    width: 300,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10
+  },
+  input: {
+    borderColor: 'black',
+    borderWidth: 1,
+    padding: 10,
+    marginTop: 10
   }
 })

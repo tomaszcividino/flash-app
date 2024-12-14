@@ -12,7 +12,7 @@ export const SpinnerContainer = ({ isVisible }: SpinnerContainerProps) => {
   return (
     <SafeAreaView style={[styles.container]}>
       <View style={styles.spinnerContainer}>
-        <ActivityIndicator size="large" color={palette.colors.purple.light} />
+        <ActivityIndicator size="large" color={palette.colors.purple.medium} />
       </View>
     </SafeAreaView>
   )

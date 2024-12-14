@@ -9,9 +9,9 @@ type DeviceModalListItemProps = {
 }
 
 type DeviceModalProps = {
-  devices: Device[]
+  devices?: Device[]
   visible: boolean
-  connectToPeripheral: (device: Device) => void
+  connectToPeripheral?: (device: Device) => void
   closeModal: () => void
 }
 

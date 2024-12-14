@@ -1,26 +1,52 @@
 import { GreenDotIcon } from '@/assets/icons/GreenDotIcon'
-import { RefreshIcon } from '@/assets/icons/RefreshIcon'
 import { WifiIcon } from '@/assets/icons/WifiIcon'
+import { TvImage } from '@/assets/images/tvImage'
+import { PrimaryButton } from '@/components/buttons/PrimaryButton'
+import CustomActivityIndicator from '@/components/CustomActivityIndicator'
 import { NoScreensFound } from '@/components/NoScreensFound'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'
-import { useRouter } from 'expo-router'
+import { typography } from '@/constants/typography'
+import { useBluetooth } from '@/hooks/useBluetooth'
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, PermissionsAndroid, Platform, Pressable, StyleSheet, View } from 'react-native'
-import { BleManager, Device } from 'react-native-ble-plx'
+import {
+  Dimensions,
+  FlatList,
+  Modal,
+  PermissionsAndroid,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View
+} from 'react-native'
+import { Device } from 'react-native-ble-plx'
 
-// Create the BleManager instance
-const bleManager = new BleManager()
+const { width: screenWidth } = Dimensions.get('window')
 
 export default function Index() {
-  const [devices, setDevices] = useState<Device[]>([])
-  const [scanning, setScanning] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [screenText, setScreenText] = useState('Searching...')
-  const [connectionState, setConnectionState] = useState<string>('Disconnected')
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null)
-  const router = useRouter()
+  const [password, setPassword] = useState('YhgqgkqGKsdR5PR83G')
+  const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null)
+  const [modalVisible, setModalVisible] = useState<boolean>(false)
+
+  const {
+    devices,
+    scanning,
+    isRefreshing,
+    screenText,
+    startScan,
+    ssidList,
+    connectedDevice,
+    connectToDevice,
+    sendWiFiCredentials,
+    pairDevice,
+    getPin,
+    currentScreen,
+    setCurrentScreen,
+    loading,
+    setLoading
+  } = useBluetooth()
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -49,122 +75,23 @@ export default function Index() {
         console.log('Permissions not granted')
       }
     } catch (err) {
-      console.warn(err)
+      console.warn('Permissions error:', err)
     }
   }
 
-  const startScan = async () => {
-    setScanning(true)
-    setDevices([])
-    setIsRefreshing(true)
-    setScreenText('Searching...')
-
-    const connectedDevices = await bleManager.connectedDevices([])
-    if (connectedDevices.length > 0) {
-      setDevices(connectedDevices)
+  const handlePasswordSubmit = async () => {
+    setLoading(true) // Show spinner
+    setModalVisible(false) // Hide modal during loading
+    if (connectedDevice) {
+      await sendWiFiCredentials(connectedDevice, password) // Simulate sending credentials
     }
-
-    bleManager.startDeviceScan(null, null, (error, device) => {
-      if (error) {
-        console.log('Error scanning:', error)
-        setScanning(false)
-        setIsRefreshing(false)
-        setScreenText('Error occurred during scanning.')
-        return
-      }
-
-      if (device?.serviceUUIDs?.includes('aabbccdd-1234-5678-9101-112233445566')) {
-        setDevices((prevDevices) => {
-          if (!prevDevices.find((dev) => dev.id === device.id)) {
-            return [...prevDevices, device]
-          }
-          return prevDevices
-        })
-      }
-    })
-
-    setTimeout(() => {
-      bleManager.stopDeviceScan()
-      setScanning(false)
-      setIsRefreshing(false)
-
-      if (devices.length === 0) {
-        setScreenText('No Screens Found')
-      } else {
-        setScreenText('Select Screen')
-      }
-    }, 5000)
+    setLoading(false) // Hide spinner after operation is complete
+    // Optionally, show a success message or handle further actions
   }
-
-  // const connectToDevice = async (device: Device) => {
-  //   try {
-  //     console.log(`Connecting to device: ${device.id}`)
-  //     const deviceConnection = await bleManager.connectToDevice(device.id)
-  //     setConnectedDevice(deviceConnection)
-  //     console.log('Successfully connected to device:', deviceConnection.id)
-
-  //     await deviceConnection.discoverAllServicesAndCharacteristics()
-  //     console.log('Discovered all services and characteristics')
-
-  //     const services = await deviceConnection.services()
-  //     for (const service of services) {
-  //       const characteristics = await deviceConnection.characteristicsForService(service.uuid)
-  //       characteristics.forEach((characteristic) => {
-  //         console.log(`Characteristic UUID: ${characteristic.uuid}`)
-  //       })
-  //     }
-
-  //     sendWiFiCredentials(deviceConnection)
-  //     bleManager.stopDeviceScan()
-
-  //     router.push('/home/addscreen')
-  //   } catch (e) {
-  //     console.error('Failed to connect to device:', e)
-  //   }
-  // }
-
-  // const sendWiFiCredentials = async (deviceConnection: Device) => {
-  //   try {
-  //     const serviceUUID = 'aabbccdd-1234-5678-9101-112233445566'
-  //     const ssidCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445568'
-  //     const notificationCharacteristicUUID = 'aabbccdd-1234-5678-9101-112233445569'
-
-  //     const ssid = 'CGA2121_QV5rJnx'
-  //     const password = 'YhgqgkqGKsdR5PR83G'
-
-  //     const credentials = JSON.stringify({ ssid, password })
-  //     const encodedCredentials = base64.encode(credentials)
-
-  //     console.log('Encoded Wi-Fi Credentials:', encodedCredentials)
-
-  //     await deviceConnection.monitorCharacteristicForService(
-  //       serviceUUID,
-  //       notificationCharacteristicUUID,
-  //       (error, characteristic) => {
-  //         if (error) {
-  //           console.warn('Error enabling notifications:', error)
-  //         } else {
-  //           const msg = base64.decode(characteristic?.value || '')
-  //           console.log('Notification received:', msg)
-  //         }
-  //       }
-  //     )
-
-  //     await deviceConnection.writeCharacteristicWithResponseForService(
-  //       serviceUUID,
-  //       ssidCharacteristicUUID,
-  //       encodedCredentials
-  //     )
-  //     console.log('Wi-Fi credentials submitted successfully.')
-  //   } catch (error) {
-  //     console.error('Error sending Wi-Fi credentials:', error)
-  //   }
-  // }
 
   const renderDevice = ({ item }: { item: Device }) => (
     <Pressable
-      // onPress={() => connectToDevice(item)}
-      onPress={() => router.push('/home/addscreen')}
+      onPress={() => connectToDevice(item)}
       style={({ pressed }) => [styles.deviceItem, pressed && { opacity: 0.7 }]}
     >
       <View>
@@ -176,62 +103,347 @@ export default function Index() {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <WifiIcon />
+          <WifiIcon color={palette.colors.blue.medium} />
           <CustomText style={{ fontSize: 12, color: '#007AFF', marginLeft: 4 }}>Ready to pair</CustomText>
         </View>
       </View>
     </Pressable>
   )
 
-  const buttonData = [
-    {
-      text: 'Refresh',
-      onPress: startScan,
-      filled: false,
-      icon: <RefreshIcon />
-    }
-  ]
+  const renderSSID = ({ item }: { item: string }) => (
+    <Pressable
+      onPress={() => {
+        setSelectedNetwork(item)
+        setModalVisible(true)
+      }}
+      style={({ pressed }) => [styles.ssidItem, pressed && { opacity: 0.7 }]}
+    >
+      <WifiIcon color={palette.colors.purple.medium} />
+      <CustomText style={{ color: palette.colors.purple.medium, marginLeft: 8 }}>{item}</CustomText>
+    </Pressable>
+  )
+
+  const handleAccept = async () => {
+    getPin(connectedDevice)
+    setCurrentScreen('connecting')
+  }
+
+  const buttonData =
+    currentScreen === ''
+      ? [{ text: typography.pairing.refresh, onPress: startScan, filled: false, disabled: false }]
+      : currentScreen === 'initial'
+        ? [
+            { text: 'Accept', onPress: handleAccept, filled: true, disabled: false },
+            { text: 'Decline pairing', onPress: () => console.log('Decline'), filled: false, disabled: false }
+          ]
+        : currentScreen === 'connecting'
+          ? [
+              {
+                text: 'Connect to this network',
+                onPress: () => setModalVisible(true),
+                filled: true,
+                disabled: false
+              },
+              {
+                text: 'Configure hotspot',
+                onPress: () => console.log('Hotspot'),
+                filled: false,
+                disabled: false
+              }
+            ]
+          : currentScreen === 'pairing'
+            ? [
+                {
+                  text: 'Complete!',
+                  onPress: pairDevice, // Wrap it in an anonymous function
+                  filled: true,
+                  disabled: false
+                }
+              ]
+            : []
 
   return (
-    <AuthenticationWrapper screenName="Add new screen" buttonData={buttonData}>
-      <View style={styles.centeredContainer}>
-        <CustomText style={{ fontSize: 30 }}>{screenText}</CustomText>
-        <CustomText style={{ fontSize: 18, marginTop: 10 }}>{`Connection Status: ${connectionState}`}</CustomText>
-      </View>
-
-      {isRefreshing ? (
-        <View style={styles.spinnerContainer}>
-          <ActivityIndicator size="large" color={palette.colors.purple.light} />
+    <>
+      <AuthenticationWrapper
+        screenName={currentScreen ? 'Pairing your screen' : 'Add new screen'}
+        buttonData={buttonData}
+        disabled={scanning}
+      >
+        <View style={styles.centeredContainer}>
+          <CustomText style={{ fontSize: 30 }}>{screenText}</CustomText>
         </View>
-      ) : devices.length > 0 ? (
-        <FlatList data={devices} keyExtractor={(item) => item.id} renderItem={renderDevice} style={styles.deviceList} />
-      ) : (
-        <NoScreensFound button={false} />
-      )}
-    </AuthenticationWrapper>
+
+        {!currentScreen && (
+          <>
+            {loading || scanning ? (
+              <CustomActivityIndicator label={scanning ? 'Scanning...' : 'Connecting...'} />
+            ) : devices.length > 0 ? (
+              <FlatList
+                data={devices}
+                keyExtractor={(item) => item.id}
+                renderItem={renderDevice}
+                style={styles.deviceList}
+              />
+            ) : (
+              <NoScreensFound button={false} />
+            )}
+          </>
+        )}
+
+        {currentScreen === 'initial' &&
+          (loading ? (
+            <>
+              <CustomActivityIndicator label="Sending credentials..." />
+            </>
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <CustomText
+                style={{ fontSize: 30, lineHeight: 31, letterSpacing: -1, textAlign: 'center', marginBottom: 12 }}
+              >
+                {connectedDevice?.id}
+              </CustomText>
+              <CustomText style={{ textAlign: 'center', marginBottom: 40, color: palette.colors.purple.medium }}>
+                Ready to pair
+              </CustomText>
+
+              <TvImage />
+            </View>
+          ))}
+
+        {currentScreen === 'connecting' &&
+          (loading ? (
+            <>
+              <CustomActivityIndicator label="Sending credentials..." />
+            </>
+          ) : (
+            <View style={{ marginTop: 32 }}>
+              <CustomText>My network</CustomText>
+              {ssidList.length > 0 && (
+                <FlatList
+                  data={ssidList}
+                  keyExtractor={(item) => item}
+                  renderItem={renderSSID}
+                  style={styles.ssidList}
+                />
+              )}
+            </View>
+          ))}
+
+        {currentScreen === 'pairing' &&
+          (loading ? (
+            <>
+              <CustomActivityIndicator label="Pairing..." />
+            </>
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <View style={{ height: 175, width: '100%', backgroundColor: '#7B838A', borderRadius: 8 }} />
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 24 }}>
+                <GreenDotIcon />
+                <CustomText style={{ fontSize: 20, marginLeft: 10 }}>
+                  {connectedDevice?.name} {connectedDevice?.id}
+                </CustomText>
+              </View>
+
+              <View>
+                <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Screen Name</CustomText>
+                <CustomText
+                  style={{
+                    padding: 12,
+                    borderWidth: 2,
+                    borderColor: '#EEF0F2',
+                    borderRadius: 12,
+                    color: '#495057',
+                    fontSize: 15,
+                    marginBottom: 12
+                  }}
+                >
+                  {connectedDevice?.name} {connectedDevice?.id}
+                </CustomText>
+
+                <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Change orientation</CustomText>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
+                    }}
+                  >
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      0
+                    </CustomText>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
+                    }}
+                  >
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      90
+                    </CustomText>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
+                    }}
+                  >
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      180
+                    </CustomText>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
+                    }}
+                  >
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      270
+                    </CustomText>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ))}
+
+        <Modal visible={modalVisible && !loading} transparent={true}>
+          <Pressable style={styles.modalBackground} onPress={() => setModalVisible(false)}>
+            <View style={styles.modalContainer}>
+              {loading ? (
+                // Show the spinner only when loading
+                <CustomActivityIndicator label="Sending credentials..." />
+              ) : (
+                // Show the modal content when not loading
+                <>
+                  <CustomText style={{ fontSize: 30, textAlign: 'center', marginBottom: 24 }}>
+                    Enter password for <CustomText>{connectedDevice?.id}</CustomText>
+                  </CustomText>
+                  <CustomText style={{ fontSize: 15, lineHeight: 20 }}>Wifi password</CustomText>
+                  <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} />
+
+                  <PrimaryButton text="Confirm" onPress={handlePasswordSubmit} filled={true} />
+                  <PrimaryButton text="Go back" onPress={() => setModalVisible(false)} filled={false} />
+                </>
+              )}
+            </View>
+          </Pressable>
+        </Modal>
+      </AuthenticationWrapper>
+    </>
   )
 }
 
 const styles = StyleSheet.create({
   centeredContainer: {
-    alignItems: 'center',
-    padding: 20
-  },
-  spinnerContainer: {
-    marginTop: 50,
+    justifyContent: 'center',
     alignItems: 'center'
   },
   deviceList: {
+    marginTop: 20
+  },
+  ssidList: {
+    marginTop: 12
+  },
+  spinnerContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 200
+  },
+  actions: {
     marginTop: 20,
-    width: '100%',
-    marginBottom: 20
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  ssidItem: {
+    padding: 16,
+    borderWidth: 2,
+    borderColor: palette.colors.purple.medium,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   deviceItem: {
-    backgroundColor: '#F4F4F5',
-    marginVertical: 10,
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
+    padding: 10,
+    backgroundColor: palette.colors.purple.light,
+    height: 74,
+    borderRadius: 8
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+  },
+  modalContainer: {
+    width: screenWidth - 40,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 20
+  },
+  input: {
+    borderColor: palette.colors.purple.light,
+    borderRadius: 12,
+    borderWidth: 2,
+    padding: 20,
+    marginTop: 10,
+    marginBottom: 24
   }
 })

@@ -1,10 +1,12 @@
 export const palette = {
   colors: {
     purple: {
-      light: '#7048E8',
+      light: '#DED4FA',
+      medium: '#7048E8',
       dark: '#5028C6'
     },
     blue: {
+      medium: '#007AFF',
       dark: '#3612A1'
     },
     grey: {

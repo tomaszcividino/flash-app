@@ -32,7 +32,7 @@ export const SecondaryButton = ({ text, filled, onPress, style, textStyle, iconS
           backgroundColor: pressed
             ? palette.colors.blue.dark
             : filled
-              ? palette.colors.purple.light
+              ? palette.colors.purple.medium
               : palette.colors.white
         },
         style
@@ -47,7 +47,7 @@ export const SecondaryButton = ({ text, filled, onPress, style, textStyle, iconS
             styles.buttonText,
             textStyle,
             {
-              color: pressed || filled ? palette.colors.white : palette.colors.purple.light
+              color: pressed || filled ? palette.colors.white : palette.colors.purple.medium
             }
           ]}
         >
@@ -57,7 +57,7 @@ export const SecondaryButton = ({ text, filled, onPress, style, textStyle, iconS
           name="add"
           style={[styles.icon, iconStyle]}
           size={16}
-          color={pressed || filled ? palette.colors.white : palette.colors.purple.light}
+          color={pressed || filled ? palette.colors.white : palette.colors.purple.medium}
         />
       </View>
     </Pressable>
@@ -75,12 +75,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12
   },
   filled: {
-    backgroundColor: palette.colors.purple.light
+    backgroundColor: palette.colors.purple.medium
   },
   outlined: {
     borderWidth: 2,
     backgroundColor: palette.colors.white,
-    borderColor: palette.colors.purple.light
+    borderColor: palette.colors.purple.medium
   },
   buttonText: {
     textAlign: 'center',

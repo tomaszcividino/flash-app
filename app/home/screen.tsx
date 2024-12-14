@@ -2,6 +2,7 @@ import { GreenDotIcon } from '@/assets/icons/GreenDotIcon'
 import { WifiIcon } from '@/assets/icons/WifiIcon'
 import { TvImage } from '@/assets/images/tvImage'
 import { PrimaryButton } from '@/components/buttons/PrimaryButton'
+import CustomActivityIndicator from '@/components/CustomActivityIndicator'
 import { NoScreensFound } from '@/components/NoScreensFound'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
@@ -10,7 +11,6 @@ import { typography } from '@/constants/typography'
 import { useBluetooth } from '@/hooks/useBluetooth'
 import React, { useEffect, useState } from 'react'
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   Modal,
@@ -44,7 +44,8 @@ export default function Index() {
     getPin,
     currentScreen,
     setCurrentScreen,
-    pin
+    loading,
+    setLoading
   } = useBluetooth()
 
   useEffect(() => {
@@ -79,10 +80,13 @@ export default function Index() {
   }
 
   const handlePasswordSubmit = async () => {
+    setLoading(true) // Show spinner
+    setModalVisible(false) // Hide modal during loading
     if (connectedDevice) {
-      await sendWiFiCredentials(connectedDevice, password)
+      await sendWiFiCredentials(connectedDevice, password) // Simulate sending credentials
     }
-    setModalVisible(false)
+    setLoading(false) // Hide spinner after operation is complete
+    // Optionally, show a success message or handle further actions
   }
 
   const renderDevice = ({ item }: { item: Device }) => (
@@ -119,38 +123,8 @@ export default function Index() {
     </Pressable>
   )
 
-  const fetchPinAndPairDevice = async () => {
-    console.log('fetchPinAndPairDevice called')
-
-    try {
-      // Step 1: Ensure the device is connected
-      if (!connectedDevice) {
-        throw new Error('No connected device found.')
-      }
-
-      console.log('Fetching PIN...')
-      await getPin(connectedDevice) // Fetch the PIN
-
-      // Step 2: Ensure the PIN is available
-      if (!pin) {
-        throw new Error('PIN is missing after fetch')
-      }
-
-      console.log('PIN fetched:', pin)
-
-      // Step 3: Proceed with pairing once the PIN is available
-      console.log('Pairing device...')
-      await pairDevice()
-    } catch (error) {
-      console.error('Error in fetchPinAndPairDevice:', error)
-    } finally {
-      console.log('fetchPinAndPairDevice execution complete')
-    }
-  }
-
   const handleAccept = async () => {
-    await getPin(connectedDevice)
-
+    getPin(connectedDevice)
     setCurrentScreen('connecting')
   }
 
@@ -199,22 +173,10 @@ export default function Index() {
           <CustomText style={{ fontSize: 30 }}>{screenText}</CustomText>
         </View>
 
-        {/* <View style={styles.actions}>
-          <Button title="Refresh" onPress={startScan} disabled={scanning} />
-          <Button
-            title="Fetch PIN"
-            onPress={() => connectedDevice && getPin(connectedDevice)}
-            disabled={!connectedDevice}
-          />
-          <Button title="Pair Device" onPress={pairDevice} disabled={!connectedDevice} />
-        </View> */}
-
         {!currentScreen && (
           <>
-            {isRefreshing ? (
-              <View style={styles.spinnerContainer}>
-                <ActivityIndicator size="large" color={palette.colors.purple.light} />
-              </View>
+            {loading || scanning ? (
+              <CustomActivityIndicator label={scanning ? 'Scanning...' : 'Connecting...'} />
             ) : devices.length > 0 ? (
               <FlatList
                 data={devices}
@@ -228,172 +190,199 @@ export default function Index() {
           </>
         )}
 
-        {currentScreen === 'initial' && (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <CustomText
-              style={{ fontSize: 30, lineHeight: 31, letterSpacing: -1, textAlign: 'center', marginBottom: 12 }}
-            >
-              {connectedDevice?.id}
-            </CustomText>
-            <CustomText style={{ textAlign: 'center', marginBottom: 40, color: palette.colors.purple.medium }}>
-              Ready to pair
-            </CustomText>
-
-            <TvImage />
-          </View>
-        )}
-
-        {currentScreen === 'connecting' && (
-          <View style={{ marginTop: 32 }}>
-            <CustomText>My network</CustomText>
-            {ssidList.length > 0 && (
-              <FlatList data={ssidList} keyExtractor={(item) => item} renderItem={renderSSID} style={styles.ssidList} />
-            )}
-          </View>
-        )}
-
-        {currentScreen === 'pairing' && (
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <View style={{ height: 175, width: '100%', backgroundColor: '#7B838A', borderRadius: 8 }} />
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 24 }}>
-              <GreenDotIcon />
-              <CustomText style={{ fontSize: 20, marginLeft: 10 }}>
-                {connectedDevice?.name} {connectedDevice?.id}
-              </CustomText>
-            </View>
-
-            <View>
-              <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Screen Name</CustomText>
+        {currentScreen === 'initial' &&
+          (loading ? (
+            <>
+              <CustomActivityIndicator label="Sending credentials..." />
+            </>
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
               <CustomText
-                style={{
-                  padding: 12,
-                  borderWidth: 2,
-                  borderColor: '#EEF0F2',
-                  borderRadius: 12,
-                  color: '#495057',
-                  fontSize: 15,
-                  marginBottom: 12
-                }}
+                style={{ fontSize: 30, lineHeight: 31, letterSpacing: -1, textAlign: 'center', marginBottom: 12 }}
               >
-                {connectedDevice?.name} {connectedDevice?.id}
+                {connectedDevice?.id}
+              </CustomText>
+              <CustomText style={{ textAlign: 'center', marginBottom: 40, color: palette.colors.purple.medium }}>
+                Ready to pair
               </CustomText>
 
-              <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Change orientation</CustomText>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <View
+              <TvImage />
+            </View>
+          ))}
+
+        {currentScreen === 'connecting' &&
+          (loading ? (
+            <>
+              <CustomActivityIndicator label="Sending credentials..." />
+            </>
+          ) : (
+            <View style={{ marginTop: 32 }}>
+              <CustomText>My network</CustomText>
+              {ssidList.length > 0 && (
+                <FlatList
+                  data={ssidList}
+                  keyExtractor={(item) => item}
+                  renderItem={renderSSID}
+                  style={styles.ssidList}
+                />
+              )}
+            </View>
+          ))}
+
+        {currentScreen === 'pairing' &&
+          (loading ? (
+            <>
+              <CustomActivityIndicator label="Pairing..." />
+            </>
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <View style={{ height: 175, width: '100%', backgroundColor: '#7B838A', borderRadius: 8 }} />
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 24 }}>
+                <GreenDotIcon />
+                <CustomText style={{ fontSize: 20, marginLeft: 10 }}>
+                  {connectedDevice?.name} {connectedDevice?.id}
+                </CustomText>
+              </View>
+
+              <View>
+                <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Screen Name</CustomText>
+                <CustomText
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
+                    padding: 12,
                     borderWidth: 2,
-                    width: '22%',
-                    paddingVertical: 16,
-                    justifyContent: 'center',
+                    borderColor: '#EEF0F2',
                     borderRadius: 12,
-                    borderColor: '#EEF0F2'
+                    color: '#495057',
+                    fontSize: 15,
+                    marginBottom: 12
                   }}
                 >
-                  <WifiIcon color={'grey'} />
-                  <CustomText
+                  {connectedDevice?.name} {connectedDevice?.id}
+                </CustomText>
+
+                <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Change orientation</CustomText>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <View
                     style={{
-                      color: '#495057',
-                      fontSize: 15,
-                      textAlign: 'center'
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
                     }}
                   >
-                    0
-                  </CustomText>
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    borderWidth: 2,
-                    width: '22%',
-                    paddingVertical: 16,
-                    justifyContent: 'center',
-                    borderRadius: 12,
-                    borderColor: '#EEF0F2'
-                  }}
-                >
-                  <WifiIcon color={'grey'} />
-                  <CustomText
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      0
+                    </CustomText>
+                  </View>
+                  <View
                     style={{
-                      color: '#495057',
-                      fontSize: 15,
-                      textAlign: 'center'
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
                     }}
                   >
-                    90
-                  </CustomText>
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    borderWidth: 2,
-                    width: '22%',
-                    paddingVertical: 16,
-                    justifyContent: 'center',
-                    borderRadius: 12,
-                    borderColor: '#EEF0F2'
-                  }}
-                >
-                  <WifiIcon color={'grey'} />
-                  <CustomText
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      90
+                    </CustomText>
+                  </View>
+                  <View
                     style={{
-                      color: '#495057',
-                      fontSize: 15,
-                      textAlign: 'center'
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
                     }}
                   >
-                    180
-                  </CustomText>
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    borderWidth: 2,
-                    width: '22%',
-                    paddingVertical: 16,
-                    justifyContent: 'center',
-                    borderRadius: 12,
-                    borderColor: '#EEF0F2'
-                  }}
-                >
-                  <WifiIcon color={'grey'} />
-                  <CustomText
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      180
+                    </CustomText>
+                  </View>
+                  <View
                     style={{
-                      color: '#495057',
-                      fontSize: 15,
-                      textAlign: 'center'
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderWidth: 2,
+                      width: '22%',
+                      paddingVertical: 16,
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderColor: '#EEF0F2'
                     }}
                   >
-                    270
-                  </CustomText>
+                    <WifiIcon color={'grey'} />
+                    <CustomText
+                      style={{
+                        color: '#495057',
+                        fontSize: 15,
+                        textAlign: 'center'
+                      }}
+                    >
+                      270
+                    </CustomText>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
-        )}
+          ))}
 
-        <Modal visible={modalVisible} transparent={true}>
+        <Modal visible={modalVisible && !loading} transparent={true}>
           <Pressable style={styles.modalBackground} onPress={() => setModalVisible(false)}>
             <View style={styles.modalContainer}>
-              <CustomText style={{ fontSize: 30, textAlign: 'center', marginBottom: 24 }}>
-                Enter password for <CustomText>{connectedDevice?.id}</CustomText>
-              </CustomText>
-              <CustomText style={{ fontSize: 15, lineHeight: 20 }}>Wifi password</CustomText>
-              <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} />
+              {loading ? (
+                // Show the spinner only when loading
+                <CustomActivityIndicator label="Sending credentials..." />
+              ) : (
+                // Show the modal content when not loading
+                <>
+                  <CustomText style={{ fontSize: 30, textAlign: 'center', marginBottom: 24 }}>
+                    Enter password for <CustomText>{connectedDevice?.id}</CustomText>
+                  </CustomText>
+                  <CustomText style={{ fontSize: 15, lineHeight: 20 }}>Wifi password</CustomText>
+                  <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} />
 
-              <PrimaryButton text="Confirm" onPress={handlePasswordSubmit} filled={true} />
-              <PrimaryButton text="Go back" onPress={() => setModalVisible(false)} filled={false} />
-              {/* <Button title="Submit" onPress={handlePasswordSubmit} /> */}
+                  <PrimaryButton text="Confirm" onPress={handlePasswordSubmit} filled={true} />
+                  <PrimaryButton text="Go back" onPress={() => setModalVisible(false)} filled={false} />
+                </>
+              )}
             </View>
           </Pressable>
         </Modal>

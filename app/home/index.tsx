@@ -1,6 +1,9 @@
 import { apolloClient } from '@/api/apollo/apolloClient'
 import { useFetchData } from '@/api/hooks/useFetchData'
-import { SCREEN_COUNT_QUERY } from '@/api/mutations/playerMutations'
+import { ALL_SCREENS_QUERY } from '@/api/mutations/playerMutations'
+import { GreenDotIcon } from '@/assets/icons/GreenDotIcon'
+import { OrientationIcon } from '@/assets/icons/OrientationIcon'
+import { PlaylistIcon } from '@/assets/icons/PlaylistIcon'
 import { PrimaryButton } from '@/components/buttons/PrimaryButton'
 import { ScreenButton } from '@/components/buttons/ScreenButton'
 import { NoScreensFound } from '@/components/NoScreensFound'
@@ -9,9 +12,9 @@ import { CustomText } from '@/components/typography/CustomText'
 import { palette } from '@/constants/palette'
 import usePermissionsModal from '@/hooks/modals/usePermissionsModal'
 import { useAsyncStorage } from '@/hooks/storage/useAsyncStorage'
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
-import { Button, Modal, SafeAreaView, StyleSheet, useWindowDimensions, View } from 'react-native'
+import { useFocusEffect, useRouter } from 'expo-router'
+import React, { useEffect, useState } from 'react'
+import { FlatList, Image, Modal, SafeAreaView, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
 const HomeScreen = () => {
   const router = useRouter()
@@ -33,128 +36,48 @@ const HomeScreen = () => {
     }
   ]
 
-  const [screenCount, setScreenCount] = useState(null)
-  const [screens, setScreens] = useState([])
   const [error, setError] = useState(null)
+  const [screens, setScreens] = useState([])
 
   const client = apolloClient('https://api.dev-fugo.com/cms/player')
 
-  const {
-    data: count,
-    isLoading,
-    isError
-  } = useFetchData({
+  const { refetch, data, isLoading, isError } = useFetchData({
     client,
     key: 'allScreens', // Unique query key
-    query: SCREEN_COUNT_QUERY // The GraphQL query to fetch data
+    query: ALL_SCREENS_QUERY
   })
 
-  // Fetch screen count
-  // useEffect(() => {
-  //   const fetchScreenCount = async () => {
-  //     try {
-  //       const accessToken = await AsyncStorage.getItem('accessToken')
-  //       const teamId = await AsyncStorage.getItem('teamId')
+  // Logs the fetching process
+  useEffect(() => {
+    console.log('Data fetch initiated for screens')
+    refetch() // Manually refetch data on screen load
+  }, [refetch])
 
-  //       if (!accessToken || !teamId) {
-  //         setError('Missing access token or team ID')
-  //         return
-  //       }
+  // Handle any errors during the fetch
+  useEffect(() => {
+    if (isError) {
+      console.log('Error fetching screens:', isError)
+      setError('Failed to load screens')
+    }
+  }, [isError])
 
-  //       const { data } = await apolloClient(urls.api.cmsPlayer).query({
-  //         query: SCREEN_COUNT_QUERY,
-  //         context: {
-  //           headers: {
-  //             Authorization: `Bearer ${accessToken}`,
-  //             'X-Team-Id': teamId
-  //           }
-  //         }
-  //       })
-
-  //       setScreenCount(data.screenCount)
-  //     } catch (err) {
-  //       setError('Error fetching screen count')
-  //       console.error('Error fetching screen count:', err)
-  //     }
-  //   }
-
-  //   fetchScreenCount()
-  // }, [])
-
-  // useEffect(() => {
-  //   const deleteAllPlayers = async () => {
-  //     try {
-  //       const accessToken = await AsyncStorage.getItem('accessToken')
-  //       const teamId = await AsyncStorage.getItem('teamId')
-
-  //       if (!accessToken || !teamId) {
-  //         setError('Missing access token or team ID')
-  //         return
-  //       }
-
-  //       // Loop through each playerId in the screens and delete them
-  //       for (const screen of screens) {
-  //         const playerId = screen.player.playerId
-
-  //         const { data } = await client.mutate({
-  //           mutation: DELETE_PLAYER_MUTATION,
-  //           variables: { playerId },
-  //           context: {
-  //             headers: {
-  //               Authorization: `Bearer ${accessToken}`,
-  //               'X-Team-Id': teamId
-  //             }
-  //           }
-  //         })
-
-  //         console.log(`Deleted playerId: ${playerId}`, data)
-  //       }
-
-  //       // Optionally, refetch or update the state to reflect the deletions
-  //       setScreens([]) // Clear the screens locally
-  //     } catch (err) {
-  //       setError('Error deleting players')
-  //       console.error('Error deleting players:', err)
-  //     }
-  //   }
-
-  //   // Automatically delete all players when the component mounts
-  //   if (screens.length > 0) {
-  //     deleteAllPlayers()
-  //   }
-  // })
-
-  // Fetch all screens
-  // useEffect(() => {
-  //   const fetchAllScreens = async () => {
-  //     try {
-  //       const accessToken = await AsyncStorage.getItem('accessToken')
-  //       const teamId = await AsyncStorage.getItem('teamId')
-
-  //       if (!accessToken || !teamId) {
-  //         setError('Missing access token or team ID')
-  //         return
-  //       }
-
-  //       const { data } = await apolloClient(urls.api.cmsPlayer).query({
-  //         query: ALL_SCREENS_QUERY,
-  //         context: {
-  //           headers: {
-  //             Authorization: `Bearer ${accessToken}`,
-  //             'X-Team-Id': teamId
-  //           }
-  //         }
-  //       })
-
-  //       setScreens(data.allScreens || [])
-  //     } catch (err) {
-  //       setError('Error fetching screens')
-  //       console.error('Error fetching screens:', err)
-  //     }
-  //   }
-
-  //   fetchAllScreens()
-  // }, [])
+  // Update the screens state with fetched data
+  useEffect(() => {
+    if (data && data.allScreens) {
+      console.log('Fetched screens data:', data.allScreens)
+      setScreens(
+        data.allScreens.map((screen) => ({
+          playerId: screen.player.playerId,
+          tenantId: screen.player.tenantId,
+          name: screen.player.name,
+          settings: screen.player.settings,
+          info: screen.player.info,
+          playlist: screen.player.playlist, // Assuming playlist is available
+          connectionStatus: screen.player.connectionStatus // Assuming connectionStatus is available
+        }))
+      )
+    }
+  }, [data])
 
   const handleLogout = async () => {
     try {
@@ -171,9 +94,58 @@ const HomeScreen = () => {
     }
   }
 
-  console.log(screenCount)
-  console.log(screens, 'screens')
-  // console.log(screens[0], 'screens')
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('HomeScreen focused, triggering refetch...')
+      refetch() // Trigger data refetch
+    }, [refetch]) // This will ensure refetch happens every time screen is focused
+  )
+
+  useEffect(() => {
+    if (data && data.allScreens) {
+      console.log('Fetched screens data:', data.allScreens)
+      setScreens(
+        data.allScreens.map((screen) => ({
+          playerId: screen.player.playerId,
+          tenantId: screen.player.tenantId,
+          name: screen.player.name,
+          settings: screen.player.settings,
+          info: screen.player.info,
+          playlist: screen.player.playlist, // Assuming playlist is available
+          connectionStatus: screen.player.connectionStatus // Assuming connectionStatus is available
+        }))
+      )
+    }
+  }, [data])
+
+  // FlatList render item
+  const renderScreenItem = ({ item }) => {
+    const { tenantId, playerId, name, settings, playlist, connectionStatus } = item
+    const screenOrientation = settings?.screenOrientation || '0' // Default to 'N/A' if not available
+
+    return (
+      <View style={{ borderColor: '#29CC6A', borderWidth: 2, borderRadius: 12, padding: 8 }}>
+        <Image source={require('../../assets/images/screenImage.png')} style={{ width: '100%', borderRadius: 8 }} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
+          <GreenDotIcon />
+          <Text style={{ marginLeft: 8, fontSize: 20 }}>{name}</Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <OrientationIcon />
+            <Text style={{ marginLeft: 4 }}>Portrait {screenOrientation}°</Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <PlaylistIcon />
+            <Text style={{ marginLeft: 12 }}>X Items</Text>
+          </View>
+        </View>
+      </View>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -193,20 +165,13 @@ const HomeScreen = () => {
 
       {error && <CustomText style={{ color: 'red', textAlign: 'center' }}>{error}</CustomText>}
 
-      <View style={styles.screenList}>
-        {screens.length > 0 ? (
-          screens.map((screen, index) => (
-            <View key={index} style={styles.screenItem}>
-              <CustomText>Tenant ID: {screen.player.tenantId}</CustomText>
-              <CustomText>Player ID: {screen.player.playerId}</CustomText>
-            </View>
-          ))
-        ) : (
-          <NoScreensFound button />
-        )}
-      </View>
-
-      <Button title="Logout" onPress={handleLogout} />
+      <FlatList
+        data={screens}
+        renderItem={renderScreenItem}
+        keyExtractor={(item, index) => item.playerId || index.toString()}
+        contentContainerStyle={styles.screenList}
+        ListEmptyComponent={<NoScreensFound button />}
+      />
 
       <Modal
         visible={isModalVisible}
@@ -262,7 +227,8 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderWidth: 1,
     borderColor: palette.colors.grey.light,
-    borderRadius: 5
+    borderRadius: 5,
+    backgroundColor: palette.colors.grey.light // Grey background
   },
   modalBackground: {
     flex: 1,

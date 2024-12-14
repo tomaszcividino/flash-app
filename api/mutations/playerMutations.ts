@@ -8,6 +8,8 @@ export const ALL_SCREENS_QUERY = gql`
         playerId
         info
         name
+        settings
+        registrationStatus
       }
     }
   }

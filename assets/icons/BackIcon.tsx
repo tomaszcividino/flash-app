@@ -5,7 +5,7 @@ export const BackIcon = (props: SvgProps) => (
   <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" {...props}>
     <G clipPath="url(#a)">
       <Path
-        fill={palette.colors.purple.light}
+        fill={palette.colors.purple.medium}
         d="m10.828 12 4.95 4.95-1.414 1.414L8 12l6.364-6.364 1.414 1.414-4.95 4.95Z"
       />
     </G>

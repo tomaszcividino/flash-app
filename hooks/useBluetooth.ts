@@ -6,6 +6,7 @@ import { PermissionsAndroid, Platform } from 'react-native'
 import { BleManager, Device } from 'react-native-ble-plx'
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useRouter } from 'expo-router'
 import base64 from 'react-native-base64'
 
 const bleManager = new BleManager()
@@ -30,6 +31,8 @@ export const useBluetooth = () => {
 
   const [loading, setLoading] = useState(false)
   const [pairingResult, setPairingResult] = useState<string | null>(null)
+
+  const router = useRouter()
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -126,6 +129,7 @@ export const useBluetooth = () => {
 
   const connectToDevice = async (device: Device) => {
     try {
+      setLoading(true)
       const deviceConnection = await bleManager.connectToDevice(device.id)
       setConnectedDevice(deviceConnection)
 
@@ -140,6 +144,7 @@ export const useBluetooth = () => {
       await subscribeToNotifications(deviceConnection)
 
       setCurrentScreen('initial')
+      setLoading(false)
     } catch (e) {
       console.error('Failed to connect to device:', e)
     }
@@ -320,6 +325,7 @@ export const useBluetooth = () => {
     } finally {
       console.log('pairDevice execution complete')
       setLoading(false)
+      router.push('/home')
     }
   }
 
@@ -339,6 +345,8 @@ export const useBluetooth = () => {
     pairDevice,
     getPin,
     currentScreen,
-    setCurrentScreen
+    setCurrentScreen,
+    loading,
+    setLoading
   }
 }

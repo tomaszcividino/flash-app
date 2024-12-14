@@ -1,7 +1,6 @@
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client'
-import { useQuery, UseQueryResult } from '@tanstack/react-query'
-
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useQuery, UseQueryResult } from '@tanstack/react-query'
 
 interface UseFetchDataParams {
   client: ApolloClient<NormalizedCacheObject>
@@ -20,6 +19,9 @@ export const useFetchData = ({ client, key, query }: UseFetchDataParams): UseQue
         throw new Error('Missing access token or team ID')
       }
 
+      // Manually clear the Apollo Client cache
+      await client.cache.reset() // Clear the cache manually
+
       const { data } = await client.query({
         query,
         context: {
@@ -27,7 +29,8 @@ export const useFetchData = ({ client, key, query }: UseFetchDataParams): UseQue
             Authorization: `Bearer ${accessToken}`,
             'X-Team-Id': teamId
           }
-        }
+        },
+        fetchPolicy: 'no-cache' // Ensures that no cache is used for the specific query
       })
 
       return data

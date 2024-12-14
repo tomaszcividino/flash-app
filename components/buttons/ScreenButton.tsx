@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   filled: {
     borderWidth: 0,
-    backgroundColor: palette.colors.purple.light
+    backgroundColor: palette.colors.purple.medium
   },
   outlined: {
     borderWidth: 2,

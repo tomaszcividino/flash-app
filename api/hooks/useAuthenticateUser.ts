@@ -1,22 +1,10 @@
+import { authenticationConstants } from '@/constants/constants'
+import { AuthenticateInput, AuthenticateResponse } from '@/src/typescript/authenticationTypes'
 import { useMutation } from '@apollo/client'
 import { useQueryClient } from '@tanstack/react-query'
-import { AUTHENTICATE_USER } from './mutations/authMutations'
+import { AUTHENTICATE_USER } from '../mutations/authMutations'
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
-interface AuthenticateInput {
-  email: string
-  password: string
-}
-interface AuthenticateResponse {
-  authenticate: {
-    auth: {
-      accessToken: string
-      refreshToken: string
-    }
-    teamId: string
-    tenantId: string
-  }
-}
 
 export const useAuthenticateUser = () => {
   const queryClient = useQueryClient()
@@ -34,9 +22,9 @@ export const useAuthenticateUser = () => {
         const { accessToken, refreshToken } = response.data.authenticate.auth
         const { teamId } = response.data.authenticate
 
-        await AsyncStorage.setItem('accessToken', accessToken)
-        await AsyncStorage.setItem('refreshToken', refreshToken)
-        await AsyncStorage.setItem('teamId', teamId)
+        await AsyncStorage.setItem(authenticationConstants.accessToekn, accessToken)
+        await AsyncStorage.setItem(authenticationConstants.refreshToken, refreshToken)
+        await AsyncStorage.setItem(authenticationConstants.teamId, teamId)
 
         queryClient.setQueryData(['isUserLoggedIn'], true)
 

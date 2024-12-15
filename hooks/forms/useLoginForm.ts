@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router'
 import { useForm } from 'react-hook-form'
 import { Alert } from 'react-native'
 
-import { useAuthenticateUser } from '@/api/useAuthenticateUser'
+import { useAuthenticateUser } from '@/api/hooks/useAuthenticateUser'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 export interface LoginFormData {
   email: string

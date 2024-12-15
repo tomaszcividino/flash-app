@@ -1,7 +1,7 @@
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer'
 import { StatusBar } from 'expo-status-bar'
 
-import { useFetchUserEmail } from '@/api/useFetchUSerEmail'
+import { useFetchUserEmail } from '@/api/hooks/useFetchUserEmail'
 import { BackIcon } from '@/assets/icons/BackIcon'
 import { DrawerIcon } from '@/assets/icons/DrawerIcon'
 import { SecondaryButton } from '@/components/buttons/SecondaryButton'
@@ -23,6 +23,7 @@ const Drawer = createDrawerNavigator()
 
 export default function Layout() {
   const { email } = useFetchUserEmail()
+
   const router = useRouter()
 
   const headerOptions = {

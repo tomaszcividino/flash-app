@@ -1,7 +1,7 @@
 import { useFormState } from 'react-hook-form'
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableWithoutFeedback } from 'react-native'
 
-import { useUpdateTenant } from '@/api/useUpdateTenant'
+import { useUpdateTenant } from '@/api/hooks/useUpdateTenant'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
 import { palette } from '@/constants/palette'

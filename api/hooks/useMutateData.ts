@@ -1,7 +1,7 @@
+import { authenticationConstants } from '@/constants/constants'
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, UseMutationResult } from '@tanstack/react-query'
-
 interface UseFetchDataParams {
   client: ApolloClient<NormalizedCacheObject>
   key: string
@@ -13,12 +13,12 @@ export const useMutateData = ({ client, key, mutation }: UseFetchDataParams): Us
     mutationKey: [key],
     mutationFn: async (variables: any) => {
       const [accessToken, teamId] = await Promise.all([
-        AsyncStorage.getItem('accessToken'),
-        AsyncStorage.getItem('teamId')
+        AsyncStorage.getItem(authenticationConstants.accessToekn),
+        AsyncStorage.getItem(authenticationConstants.teamId)
       ])
 
-      if (!accessToken) throw new Error('Access token is missing')
-      if (!teamId) throw new Error('Team ID is missing')
+      if (!accessToken) throw new Error(authenticationConstants.errors.missingToken)
+      if (!teamId) throw new Error(authenticationConstants.errors.missingTeamId)
 
       await client.cache.reset()
 

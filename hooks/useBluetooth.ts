@@ -278,7 +278,9 @@ export const useBluetooth = () => {
     }
   }
 
-  const pairDevice = async () => {
+  const pairDevice = async ({ name, settings }) => {
+    console.log(settings, 'settings')
+
     console.log('pairDevice called')
     setLoading(true)
     setPairingResult(null)
@@ -295,9 +297,7 @@ export const useBluetooth = () => {
       }
 
       console.log('Preparing parameters...')
-      const name = 'D8:3A:DD:CB:B4:FE'
       const colour = '#000000'
-      const settings = {}
       const shared = []
 
       console.log('Calling mutation...')

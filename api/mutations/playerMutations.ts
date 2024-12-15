@@ -43,3 +43,31 @@ export const PAIR_PLAYER_MUTATION = gql`
     }
   }
 `
+
+export const UPDATE_PLAYER_MUTATION = gql`
+  mutation updatePlayer($playerId: String!, $newName: String, $newColour: String, $newInfo: Json, $newAddress: String) {
+    updatePlayer(
+      playerId: $playerId
+      newName: $newName
+      newColour: $newColour
+      newInfo: $newInfo
+      newAddress: $newAddress
+    ) {
+      tenantId
+      playerId
+      name
+      colour
+      groupId
+      info
+      registrationStatus
+      address
+      settings
+      owners
+      shared
+      createdAt
+      createdBy
+      updatedAt
+      updatedBy
+    }
+  }
+`

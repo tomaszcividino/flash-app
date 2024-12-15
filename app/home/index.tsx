@@ -14,7 +14,17 @@ import usePermissionsModal from '@/hooks/modals/usePermissionsModal'
 import { useAsyncStorage } from '@/hooks/storage/useAsyncStorage'
 import { useFocusEffect, useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
-import { FlatList, Image, Modal, SafeAreaView, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import {
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View
+} from 'react-native'
 
 const HomeScreen = () => {
   const router = useRouter()
@@ -118,32 +128,51 @@ const HomeScreen = () => {
     }
   }, [data])
 
-  // FlatList render item
+  const handleNavigateSingleScreen = (item: any) => {
+    console.log(item)
+
+    // Access screenOrientation from settings
+    const screenOrientation = item.settings?.screenOrientation || '0' // Default to 'N/A' if not set
+    const playerId = item.playerId // Default to 'N/A' if not set
+
+    router.push({
+      pathname: '/screens/single/[name]',
+      params: {
+        name: item.name,
+        item,
+        screenOrientation,
+        playerId
+        // Pass it along to the next screen
+      }
+    })
+  }
   const renderScreenItem = ({ item }) => {
     const { tenantId, playerId, name, settings, playlist, connectionStatus } = item
-    const screenOrientation = settings?.screenOrientation || '0' // Default to 'N/A' if not available
+    const screenOrientation = settings?.screenOrientation || '0'
 
     return (
-      <View style={{ borderColor: '#29CC6A', borderWidth: 2, borderRadius: 12, padding: 8 }}>
-        <Image source={require('../../assets/images/screenImage.png')} style={{ width: '100%', borderRadius: 8 }} />
+      <Pressable onPress={() => handleNavigateSingleScreen(item)}>
+        <View style={{ borderColor: '#29CC6A', borderWidth: 2, borderRadius: 12, padding: 8 }}>
+          <Image source={require('../../assets/images/screenImage.png')} style={{ width: '100%', borderRadius: 8 }} />
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
-          <GreenDotIcon />
-          <Text style={{ marginLeft: 8, fontSize: 20 }}>{name}</Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <OrientationIcon />
-            <Text style={{ marginLeft: 4 }}>Portrait {screenOrientation}°</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
+            <GreenDotIcon />
+            <Text style={{ marginLeft: 8, fontSize: 20 }}>{name}</Text>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <PlaylistIcon />
-            <Text style={{ marginLeft: 12 }}>X Items</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <OrientationIcon />
+              <Text style={{ marginLeft: 4 }}>Portrait {screenOrientation}°</Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <PlaylistIcon />
+              <Text style={{ marginLeft: 12 }}>X Items</Text>
+            </View>
           </View>
         </View>
-      </View>
+      </Pressable>
     )
   }
 

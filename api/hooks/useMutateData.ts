@@ -1,16 +1,17 @@
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useQuery, UseQueryResult } from '@tanstack/react-query'
+import { useMutation, UseMutationResult } from '@tanstack/react-query'
+
 interface UseFetchDataParams {
   client: ApolloClient<NormalizedCacheObject>
   key: string
-  query: any
+  mutation: any
 }
 
-export const useFetchData = ({ client, key, query }: UseFetchDataParams): UseQueryResult<any, Error> => {
-  return useQuery({
-    queryKey: [key],
-    queryFn: async () => {
+export const useMutateData = ({ client, key, mutation }: UseFetchDataParams): UseMutationResult<any, Error> => {
+  return useMutation({
+    mutationKey: [key],
+    mutationFn: async (variables: any) => {
       const [accessToken, teamId] = await Promise.all([
         AsyncStorage.getItem('accessToken'),
         AsyncStorage.getItem('teamId')
@@ -21,20 +22,25 @@ export const useFetchData = ({ client, key, query }: UseFetchDataParams): UseQue
 
       await client.cache.reset()
 
-      const { data } = await client.query({
-        query,
+      const { data } = await client.mutate({
+        mutation,
+        variables,
         context: {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'X-Team-Id': teamId
           }
-        },
-        fetchPolicy: 'no-cache'
+        }
       })
 
       return data
     },
-    staleTime: 5 * 60 * 1000,
+    onError: (error) => {
+      console.error(error)
+    },
+    onSuccess: (data) => {
+      console.log('Mutation success', data)
+    },
     retry: 3
   })
 }

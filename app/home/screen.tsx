@@ -30,6 +30,9 @@ export default function Index() {
   const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null)
   const [modalVisible, setModalVisible] = useState<boolean>(false)
 
+  const [screenName, setScreenName] = useState<string | null>(null)
+  const [selectedOrientation, setSelectedOrientation] = useState<number | null>(null)
+
   const {
     devices,
     scanning,
@@ -128,6 +131,16 @@ export default function Index() {
     setCurrentScreen('connecting')
   }
 
+  const handlePairDevice = () => {
+    if (!screenName || !selectedOrientation) {
+      alert('Please provide a screen name and orientation.')
+      return
+    }
+
+    const settings = { screenOrientation: selectedOrientation }
+    pairDevice({ name: screenName, settings })
+  }
+
   const buttonData =
     currentScreen === ''
       ? [{ text: typography.pairing.refresh, onPress: startScan, filled: false, disabled: false }]
@@ -155,7 +168,7 @@ export default function Index() {
             ? [
                 {
                   text: 'Complete!',
-                  onPress: pairDevice, // Wrap it in an anonymous function
+                  onPress: handlePairDevice, // Wrap it in an anonymous function
                   filled: true,
                   disabled: false
                 }
@@ -247,7 +260,7 @@ export default function Index() {
 
               <View>
                 <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Screen Name</CustomText>
-                <CustomText
+                <TextInput
                   style={{
                     padding: 12,
                     borderWidth: 2,
@@ -257,108 +270,42 @@ export default function Index() {
                     fontSize: 15,
                     marginBottom: 12
                   }}
-                >
-                  {connectedDevice?.name} {connectedDevice?.id}
-                </CustomText>
+                  placeholder="Enter screen name"
+                  value={screenName || connectedDevice?.name || ''}
+                  onChangeText={setScreenName}
+                />
 
                 <CustomText style={{ fontSize: 15, lineHeight: 20, marginBottom: 12 }}>Change orientation</CustomText>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 4,
-                      borderWidth: 2,
-                      width: '22%',
-                      paddingVertical: 16,
-                      justifyContent: 'center',
-                      borderRadius: 12,
-                      borderColor: '#EEF0F2'
-                    }}
-                  >
-                    <WifiIcon color={'grey'} />
-                    <CustomText
+                  {[0, 90, 180, 270].map((angle) => (
+                    <Pressable
+                      key={angle}
+                      onPress={() => setSelectedOrientation(angle)}
                       style={{
-                        color: '#495057',
-                        fontSize: 15,
-                        textAlign: 'center'
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                        borderWidth: 2,
+                        width: '22%',
+                        paddingVertical: 16,
+                        justifyContent: 'center',
+                        borderRadius: 12,
+                        borderColor: selectedOrientation === angle ? '#007AFF' : '#EEF0F2', // Highlight selected orientation
+                        backgroundColor: selectedOrientation === angle ? '#E6F0FF' : 'transparent' // Add background highlight
                       }}
                     >
-                      0
-                    </CustomText>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 4,
-                      borderWidth: 2,
-                      width: '22%',
-                      paddingVertical: 16,
-                      justifyContent: 'center',
-                      borderRadius: 12,
-                      borderColor: '#EEF0F2'
-                    }}
-                  >
-                    <WifiIcon color={'grey'} />
-                    <CustomText
-                      style={{
-                        color: '#495057',
-                        fontSize: 15,
-                        textAlign: 'center'
-                      }}
-                    >
-                      90
-                    </CustomText>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 4,
-                      borderWidth: 2,
-                      width: '22%',
-                      paddingVertical: 16,
-                      justifyContent: 'center',
-                      borderRadius: 12,
-                      borderColor: '#EEF0F2'
-                    }}
-                  >
-                    <WifiIcon color={'grey'} />
-                    <CustomText
-                      style={{
-                        color: '#495057',
-                        fontSize: 15,
-                        textAlign: 'center'
-                      }}
-                    >
-                      180
-                    </CustomText>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 4,
-                      borderWidth: 2,
-                      width: '22%',
-                      paddingVertical: 16,
-                      justifyContent: 'center',
-                      borderRadius: 12,
-                      borderColor: '#EEF0F2'
-                    }}
-                  >
-                    <WifiIcon color={'grey'} />
-                    <CustomText
-                      style={{
-                        color: '#495057',
-                        fontSize: 15,
-                        textAlign: 'center'
-                      }}
-                    >
-                      270
-                    </CustomText>
-                  </View>
+                      <WifiIcon color={selectedOrientation === angle ? '#007AFF' : 'grey'} />
+                      <CustomText
+                        style={{
+                          color: selectedOrientation === angle ? '#007AFF' : '#495057',
+                          fontSize: 15,
+                          textAlign: 'center'
+                        }}
+                      >
+                        {angle}
+                      </CustomText>
+                    </Pressable>
+                  ))}
                 </View>
               </View>
             </View>

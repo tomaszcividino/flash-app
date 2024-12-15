@@ -55,6 +55,7 @@ export default function Layout() {
         <Drawer.Screen name="connectwifi" component={ConnetToWifi} options={headerOptions} />
         <Drawer.Screen name="pairscreen" component={PairScreen} options={headerOptions} />
         <Drawer.Screen name="confirmation" component={PairScreen} options={headerOptions} />
+        <Drawer.Screen name="/screens/settings/[name]" component={PairScreen} options={headerOptions} />
       </Drawer.Navigator>
     </>
   )

@@ -2,7 +2,6 @@ import { CustomText } from '@/components/typography/CustomText'
 import { palette } from '@/constants/palette'
 import { DrawerItem } from '@react-navigation/drawer'
 import { StyleSheet, View } from 'react-native'
-
 interface DrawerItemProps {
   label: string
   icon: React.ElementType<any>

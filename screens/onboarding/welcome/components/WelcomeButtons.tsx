@@ -9,15 +9,17 @@ interface ButtonConfig {
   onPress: () => void
   disabled?: boolean
   icon: JSX.Element
+  error?: boolean
 }
 interface WelcomeButtonsProps {
   buttons: ButtonConfig[]
   footer?: boolean
   disabled?: boolean
   icon?: JSX.Element
+  error?: boolean
 }
 
-export const WelcomeButtons = ({ buttons, icon, footer = false }: WelcomeButtonsProps) => {
+export const WelcomeButtons = ({ buttons, icon, footer = false, error }: WelcomeButtonsProps) => {
   return (
     <View style={styles.buttonsContainer}>
       {footer && (
@@ -33,6 +35,7 @@ export const WelcomeButtons = ({ buttons, icon, footer = false }: WelcomeButtons
           onPress={button.onPress}
           disabled={button.disabled}
           icon={button.icon}
+          error={button.error}
         />
       ))}
     </View>

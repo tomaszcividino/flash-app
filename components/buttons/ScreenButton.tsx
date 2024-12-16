@@ -3,7 +3,6 @@ import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'r
 
 import { ForwardIcon } from '@/assets/icons/ForwardIcon'
 import { palette } from '@/constants/palette'
-
 interface ScreenButtonProps {
   text: string
   filled: boolean

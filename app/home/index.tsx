@@ -1,6 +1,6 @@
 import { apolloClient } from '@/api/apollo/apolloClient'
 import { useFetchData } from '@/api/hooks/useFetchData'
-import { ALL_SCREENS_QUERY } from '@/api/mutations/playerMutations'
+import { ALL_SCREENS_QUERY } from '@/api/queries/playerQueries'
 import { GreenDotIcon } from '@/assets/icons/GreenDotIcon'
 import { OrientationIcon } from '@/assets/icons/OrientationIcon'
 import { PlaylistIcon } from '@/assets/icons/PlaylistIcon'

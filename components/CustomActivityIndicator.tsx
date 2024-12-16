@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
-const CustomActivityIndicator = ({ label }: { label: string }) => {
+export const CustomActivityIndicator = ({ label }: { label: string }) => {
   return (
     <View style={styles.spinnerContainer}>
       <ActivityIndicator size="large" color="#9B4DFF" />
@@ -23,5 +23,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   }
 })
-
-export default CustomActivityIndicator

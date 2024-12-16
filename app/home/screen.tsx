@@ -2,7 +2,7 @@ import { GreenDotIcon } from '@/assets/icons/GreenDotIcon'
 import { WifiIcon } from '@/assets/icons/WifiIcon'
 import { TvImage } from '@/assets/images/tvImage'
 import { PrimaryButton } from '@/components/buttons/PrimaryButton'
-import CustomActivityIndicator from '@/components/CustomActivityIndicator'
+import { CustomActivityIndicator } from '@/components/CustomActivityIndicator'
 import { NoScreensFound } from '@/components/NoScreensFound'
 import { CustomText } from '@/components/typography/CustomText'
 import { AuthenticationWrapper } from '@/components/wrappers/AuthenticationWrapper'
@@ -21,6 +21,7 @@ import {
   TextInput,
   View
 } from 'react-native'
+
 import { Device } from 'react-native-ble-plx'
 
 const { width: screenWidth } = Dimensions.get('window')

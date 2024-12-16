@@ -1,10 +1,11 @@
+import { asyncStorage } from '@/constants/constants'
+import { ProfileFormData } from '@/hooks/forms/useProfileForm'
+import { ProfileForm } from '@/screens/main/profile/components/ProfileForm'
 import { useRouter } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { SafeAreaView, StyleSheet } from 'react-native'
 
-import { ProfileFormData } from '@/hooks/forms/useProfileForm'
-import { ProfileForm } from '@/screens/main/profile/components/ProfileForm'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const ProfileScreen = () => {
@@ -20,7 +21,7 @@ const ProfileScreen = () => {
 
   useEffect(() => {
     const checkProfileStatus = async () => {
-      const profileVisited = await AsyncStorage.getItem('profileVisited')
+      const profileVisited = await AsyncStorage.getItem(asyncStorage.profileVisited)
       if (profileVisited === 'true') {
         router.replace('/home')
       } else {

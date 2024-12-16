@@ -5,13 +5,19 @@ interface PrimaryButtonProps {
   filled: boolean
   onPress: any
   disabled?: boolean
-  icon?: any
+  icon?: JSX.Element
+  error: boolean
 }
 
-export const PrimaryButton = ({ text, filled, onPress, disabled, icon }: PrimaryButtonProps) => {
+export const PrimaryButton = ({ text, filled, onPress, disabled, icon, error }: PrimaryButtonProps) => {
   return (
     <TouchableOpacity
-      style={[styles.button, filled ? styles.filled : styles.outlined, disabled && styles.disabledButton]}
+      style={[
+        styles.button,
+        filled ? styles.filled : styles.outlined,
+        disabled && styles.disabledButton,
+        error && (filled ? styles.errorFilled : styles.errorOutlined)
+      ]}
       onPress={onPress}
       disabled={disabled}
     >
@@ -21,6 +27,7 @@ export const PrimaryButton = ({ text, filled, onPress, disabled, icon }: Primary
             styles.buttonText,
             filled ? styles.filledText : styles.outlinedText,
             disabled && styles.disabledText,
+            error && (filled ? styles.errorFilledText : styles.errorOutlinedText),
             icon && { marginLeft: 8 }
           ]}
         >
@@ -69,5 +76,18 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginLeft: 10,
     marginTop: 4
+  },
+  errorFilled: {
+    backgroundColor: palette.colors.red
+  },
+  errorOutlined: {
+    borderColor: palette.colors.red,
+    backgroundColor: palette.colors.white
+  },
+  errorFilledText: {
+    color: palette.colors.white
+  },
+  errorOutlinedText: {
+    color: palette.colors.red
   }
 })

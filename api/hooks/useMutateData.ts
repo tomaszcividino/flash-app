@@ -13,7 +13,7 @@ export const useMutateData = ({ client, key, mutation }: UseFetchDataParams): Us
     mutationKey: [key],
     mutationFn: async (variables: any) => {
       const [accessToken, teamId] = await Promise.all([
-        AsyncStorage.getItem(authenticationConstants.accessToekn),
+        AsyncStorage.getItem(authenticationConstants.accessToken),
         AsyncStorage.getItem(authenticationConstants.teamId)
       ])
 

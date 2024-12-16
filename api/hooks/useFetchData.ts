@@ -13,7 +13,7 @@ export const useFetchData = ({ client, key, query }: UseFetchDataParams): UseQue
     queryKey: [key],
     queryFn: async () => {
       const [accessToken, teamId] = await Promise.all([
-        AsyncStorage.getItem(authenticationConstants.accessToekn),
+        AsyncStorage.getItem(authenticationConstants.accessToken),
         AsyncStorage.getItem(authenticationConstants.teamId)
       ])
 

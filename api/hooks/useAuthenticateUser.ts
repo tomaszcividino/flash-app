@@ -22,7 +22,7 @@ export const useAuthenticateUser = () => {
         const { accessToken, refreshToken } = response.data.authenticate.auth
         const { teamId } = response.data.authenticate
 
-        await AsyncStorage.setItem(authenticationConstants.accessToekn, accessToken)
+        await AsyncStorage.setItem(authenticationConstants.accessToken, accessToken)
         await AsyncStorage.setItem(authenticationConstants.refreshToken, refreshToken)
         await AsyncStorage.setItem(authenticationConstants.teamId, teamId)
 

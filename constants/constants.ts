@@ -1,5 +1,5 @@
 export const authenticationConstants = {
-  accessToekn: 'accessToken',
+  accessToken: 'accessToken',
   refreshToken: 'refreshToken',
   teamId: 'teamId',
 
@@ -13,4 +13,8 @@ export const urls = {
   adminTenant: 'https://api.dev-fugo.com/admin/tenant',
   cmsTenant: 'https://api.dev-fugo.com/cms/tenant',
   cmsPlayer: 'https://api.dev-fugo.com/cms/player'
+}
+
+export const asyncStorage = {
+  profileVisited: 'profileVisited'
 }

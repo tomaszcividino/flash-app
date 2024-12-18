@@ -4,7 +4,8 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { Stack } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { GestureHandlerRootView } from 'react-native-gesture-handler' // Import here
 
 const queryClient = new QueryClient()
 
@@ -40,11 +41,13 @@ const Layout = () => {
   }
 
   return (
-    <ApolloProvider client={client}>
-      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-        <Stack screenOptions={{ headerShown: false }} />
-      </PersistQueryClientProvider>
-    </ApolloProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ApolloProvider client={client}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+          <Stack screenOptions={{ headerShown: false }} />
+        </PersistQueryClientProvider>
+      </ApolloProvider>
+    </GestureHandlerRootView>
   )
 }
 
